@@ -1,8 +1,26 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import SkipToContent from '@/components/SkipToContent';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+const defaultDescription = 'Freelance full-stack developer and ML/AI engineer';
 
 export const metadata: Metadata = {
-  title: 'Lorenzo Santucci',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Lorenzo Santucci',
+    template: '%s — Lorenzo Santucci',
+  },
+  description: defaultDescription,
+  openGraph: {
+    type: 'website',
+    siteName: 'Lorenzo Santucci',
+    title: { default: 'Lorenzo Santucci', template: '%s — Lorenzo Santucci' },
+    description: defaultDescription,
+  },
+  alternates: { canonical: '/' },
 };
 
 export default function RootLayout({
@@ -12,7 +30,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <SkipToContent />
+        <Header />
+        <main id="main-content" className="mx-auto w-full max-w-4xl flex-grow px-4 md:px-6">
+          {children}
+        </main>
+        <Footer />
+      </body>
     </html>
   );
 }

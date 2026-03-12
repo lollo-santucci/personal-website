@@ -15,6 +15,56 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### Design doc: new dependency introduced without explicit installation plan
+**What went wrong:** `@tailwindcss/typography` was mentioned as "(If not yet installed, this spec adds it)" without specifying the install command, CSS registration syntax, or listing `package.json` in the file map.
+**Why:** Treated a new dependency as a minor aside instead of a concrete implementation step.
+**Correct approach:** Any new dependency must appear in the file map (package.json), include the install command, and specify the registration mechanism (e.g., `@plugin` directive for Tailwind v4).
+
+### Design doc: framework-specific code signatures in design
+**What went wrong:** Project detail page example included `params: Promise<{ slug: string }>` and full function body — too implementation-specific for a design doc.
+**Why:** Copy-pasted from Context7 docs directly into the design instead of abstracting to behavioral description.
+**Correct approach:** Design docs describe what a component does and its data flow, not exact function signatures. Framework-specific API details (like Next.js params typing) belong in implementation.
+
+### Design doc: shared logic defined inline instead of in a shared module
+**What went wrong:** `NAV_LINKS` and `isActiveLink` were defined inside `HeaderNav.tsx` with a note saying "extractable for testing", but tests were already planned in `src/__tests__/lib/navigation.test.ts`. Inconsistency between component ownership and test location.
+**Why:** Defaulted to co-locating logic with its primary consumer instead of thinking about reusability and testability upfront.
+**Correct approach:** When logic is pure, testable, and referenced by multiple consumers (component + tests), define it in a shared module from the start (e.g., `src/lib/navigation.ts`). Design docs should show the final module location, not "extractable later."
+
+### Design doc: missing explicit file map
+**What went wrong:** The design described components and their behavior well but didn't list all files to create/modify in one place. Readers had to piece together the file plan from scattered sections.
+**Why:** Focused on component architecture over implementation logistics.
+**Correct approach:** Every design doc should include a File Map section near the top listing every file created or modified, with a one-line purpose. This is especially important for task generation.
+
+### Design doc: external dependency contract not documented
+**What went wrong:** Multiple pages called `renderMDX(page.content)` but the design didn't document the function's contract (input type, output type, prose wrapper pattern, custom components policy).
+**Why:** Assumed the reader knows the existing API from Spec 4. But the design depends on that capability across many pages.
+**Correct approach:** When a design uses an external function in multiple places, document its contract inline — at minimum: signature, return type, and any wrapper/styling expectations. Don't assume cross-spec knowledge.
+
+### Requirements doc: redundant ACs across requirements
+**What went wrong:** R1 included site-level title/description metadata, then R11 defined the full metadata policy per page. Redundancy between the two.
+**Why:** R1 was written first as a "catch-all" for the shell. When R11 was added later for metadata, the overlap wasn't cleaned up.
+**Correct approach:** When adding a new requirement that subsumes part of an existing one, remove the overlapping ACs from the original. Each AC should have exactly one owning requirement.
+
+### Requirements doc: under-specified page vs siblings in same requirement
+**What went wrong:** R5 specified "render the home page" for `/` but gave explicit content contracts (title + rendered prose) for `/about` and `/contact`. Inconsistency within the same requirement.
+**Why:** Home page felt "obvious" so got less attention. But requirements should be uniform — if sibling routes specify what's displayed, so should the home route.
+**Correct approach:** When a requirement covers multiple routes, give each route the same level of content specification. Flag any that differ and explain why.
+
+### Requirements doc: content field references should cite their guarantee
+**What went wrong:** R8 referenced agent `personality` and `capabilities` without noting where those fields are guaranteed. If Spec 4 changes, this requirement silently breaks.
+**Why:** Assumed the reader knows the Agent content type. Requirements should be self-contained enough to trace dependencies.
+**Correct approach:** When a requirement depends on specific content fields, cite the dependency explicitly (e.g., "guaranteed required by Agent content type — see Dependencies section").
+
+### Requirements doc: missing accessibility criteria for interactive components
+**What went wrong:** Hamburger menu had no ACs for `aria-label`, `aria-expanded`, keyboard operability, or `aria-current="page"` on active links.
+**Why:** Focused on visual behavior (toggle open/close) without considering assistive technology and keyboard interaction.
+**Correct approach:** Every interactive UI component in requirements must specify: accessible label, state communication to AT, and keyboard operability. Add these as explicit ACs, not design-phase afterthoughts.
+
+### Requirements doc: missing page metadata / SEO requirement
+**What went wrong:** No requirement for per-page `<title>`, meta description, Open Graph, or canonical URLs on a personal/professional website.
+**Why:** Focused on layout and navigation, overlooked that discoverability and shareability are core outcomes for a freelancer site.
+**Correct approach:** For any public-facing site, include a metadata requirement covering title pattern, descriptions, OG basics, and canonical URLs. This is a requirements-level concern, not design.
+
 ### Direct `as T` cast from Record<string, unknown> fails in YAML-only loaders
 **What went wrong:** `agents.ts` used `return raw.data as Agent` which TS rejects because `Record<string, unknown>` doesn't overlap with `Agent`. MDX loaders avoided this incidentally via `{ ...raw.data, content: raw.body }` (spread creates a fresh type).
 **Why:** Direct cast from `Record<string, unknown>` to a concrete interface requires double assertion when there's no structural overlap.
@@ -65,6 +115,9 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Decisions Log
 
+### Metadata policy: static metadata vs generateMetadata by route type
+Static routes (home, about, contact, index pages) export `const metadata`. Dynamic routes (`[slug]` pages) export `generateMetadata()` that reads the entity for per-page title/description/canonical. Consistent convention avoids mixed patterns across the codebase.
+
 ### Content loader: shared utility core with thin per-type wrappers
 Common logic (file discovery, validation, branded casting, sorting) lives in `src/lib/content/utils/`. Each content type module is a thin wrapper configuring the shared core with type-specific metadata (directory, required fields, sort comparator). Avoids duplicating logic across 5+ loader modules.
 
@@ -99,6 +152,15 @@ Vitest chosen as the test runner. Type-level tests use `expectTypeOf`. Test scri
 
 ### Template-TypeScript alignment tests use hand-maintained metadata map
 For the 8 content type templates, tests use a hand-maintained `CONTENT_TYPES` metadata map (field names, optionality, enum values, branded types) rather than AST-parsing TS interfaces at test time. The domain is small and stable — AST parsing would add complexity and a `typescript` API dependency for no real benefit. Update the map when interfaces change.
+
+### Testing async server components in jsdom
+Async server components (e.g., `AboutPage`) can't be rendered directly with `render(<AboutPage />)`. Call the function, await the result, then render: `const el = await AboutPage(); render(el);`. For components with params, pass a resolved Promise: `{ params: Promise.resolve({ slug: 'x' }) }`.
+
+### Per-file vitest environment for component tests
+Existing content loader tests use Node environment. Component tests need jsdom. Instead of changing the global vitest config, use `// @vitest-environment jsdom` at the top of each component test file. Avoids breaking existing Node-based tests.
+
+### PBT with String.replace and special replacement patterns
+`String.prototype.replace('%s', title)` breaks when `title` contains `$&`, `$'`, etc. (special replacement patterns). Use `template.split('%s')` + concatenation instead. Discovered during Property 6 (title template) testing.
 
 ### Next.js 16 + Tailwind v4 as bootstrap baseline
 Next.js 16.1.6, Tailwind 4.2.1, ESLint 9.39.4 (flat config), TypeScript 5.9.3. Tailwind v4 uses CSS-based config. ESLint uses flat config. Prettier standalone (no ESLint integration).

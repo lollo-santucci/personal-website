@@ -1,2 +1,27 @@
 @import 'tailwindcss';
 @source "../../content/";
+@plugin "@tailwindcss/typography";
+
+/*
+ * Base typography and global styles
+ * Requirements: 9.1 (system font stack), 9.2 (prose styles), 9.3 (single light palette), 11.3 (focus indicators)
+ */
+
+@layer base {
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+    font-size: 1rem; /* 16px */
+    line-height: 1.625; /* between 1.5–1.75 */
+    color: #1a1a1a;
+    background-color: #ffffff;
+  }
+
+  /* Visible focus indicator for all interactive elements (R11.3) */
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
