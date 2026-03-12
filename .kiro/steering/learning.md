@@ -15,6 +15,26 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### Direct `as T` cast from Record<string, unknown> fails in YAML-only loaders
+**What went wrong:** `agents.ts` used `return raw.data as Agent` which TS rejects because `Record<string, unknown>` doesn't overlap with `Agent`. MDX loaders avoided this incidentally via `{ ...raw.data, content: raw.body }` (spread creates a fresh type).
+**Why:** Direct cast from `Record<string, unknown>` to a concrete interface requires double assertion when there's no structural overlap.
+**Correct approach:** Use `as unknown as T` for runtime-validated casts in YAML/JSON-only loaders (agents, characters, dialogues, locations). MDX loaders don't need this because the spread already widens the type.
+
+### fast-check v4: fc.date() can produce invalid Date objects
+**What went wrong:** Blog post sorting PBT used `fc.date().map(d => d.toISOString().slice(0,10))` which threw `RangeError: Invalid time value` because fast-check v4 generates Date objects outside the valid range.
+**Why:** fast-check v4's `fc.date()` default range includes dates that can't be serialized with `toISOString()`.
+**Correct approach:** Generate date strings from integer components: `fc.tuple(fc.integer({min:2000,max:2030}), fc.integer({min:1,max:12}), fc.integer({min:1,max:28}))` and format manually.
+
+### Design feedback not applied before moving to tasks
+**What went wrong:** Lorenzo gave 5 concrete design doc feedback points (slug validation ambiguity, Agent nested casting, renderMDX contract, localeCompare specificity, fragile PBT properties). I acknowledged them but proceeded to create tasks.md without editing design.md first.
+**Why:** Implicit rules suggested moving to tasks after design exists, and I followed the automation instead of the user's explicit feedback.
+**Correct approach:** Always apply user feedback to the current document before proceeding to the next phase. User corrections take priority over workflow automation.
+
+### Return type typo in function signature table
+**What went wrong:** `getProjectBySlug` return type was written as `Promise<Page | null>` instead of `Promise<Project | null>` in the requirements doc.
+**Why:** Copy-paste from the Page row when building the table.
+**Correct approach:** After generating tables with repeated structure, verify each row's types match the content type — don't just copy the first row.
+
 ### Subagent inconsistency: readonly modifiers on entity interfaces
 **What went wrong:** Subagent added `readonly` to all `BlogPost` fields while other entity interfaces (Page, Project, Agent, Service) didn't use `readonly`.
 **Why:** No explicit constraint in the subagent prompt about `readonly` consistency for the first few tasks; added it after noticing the drift.
@@ -41,9 +61,27 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - `import.meta.dirname` is undefined under `tsx` CJS transform → use `dirname(fileURLToPath(import.meta.url))`.
 - Prettier exits non-zero on unmatched globs → `--no-error-on-unmatched-pattern`.
 - Complex inline `node -e "..."` scripts fail in zsh with quoting issues → write to a temp `.mjs` file instead.
-- `js-yaml` is not installed in this project → for ad-hoc YAML validation scripts, use Node built-ins or string parsing.
+- `js-yaml` is now installed as a production dependency (content-loader spec). Previously required Node built-ins for ad-hoc YAML parsing.
 
 ## Decisions Log
+
+### Content loader: shared utility core with thin per-type wrappers
+Common logic (file discovery, validation, branded casting, sorting) lives in `src/lib/content/utils/`. Each content type module is a thin wrapper configuring the shared core with type-specific metadata (directory, required fields, sort comparator). Avoids duplicating logic across 5+ loader modules.
+
+### Content loader: .yml excluded, only .yaml supported
+YAML content files use `.yaml` only, not `.yml`. Aligns with Spec 3 templates which use `.yaml` exclusively. Explicit exclusion avoids ambiguity.
+
+### Content loader: by-slug accepts string, not Slug (API ergonomics)
+By-slug functions accept plain `string` parameter, not branded `Slug`. Callers (route params, URL segments) provide plain strings — requiring `Slug` would force casting at every call site. Branding happens inside the loader.
+
+### Content loader validation scope
+Loaders validate: required field presence, array-typed fields are arrays, parseable file format. They do NOT validate enum membership, IsoDateString regex, or deep runtime type-checking. Explicit scope prevents implementation drift.
+
+### Slug identity: filename is canonical, frontmatter must match
+Filename (without extension) is the single source of truth for slug. Frontmatter `slug` is required and must match exactly — mismatch throws. By-slug lookup uses filename, not frontmatter scan.
+
+### Content directory resilience: missing/empty → empty array, not error
+Missing content directory → list returns `[]`, by-slug returns `null`. Empty directory (only `.gitkeep`/templates) → `[]`. No build failures from absent content.
 
 ### Vitest as project test runner
 Vitest chosen as the test runner. Type-level tests use `expectTypeOf`. Test script: `"test": "vitest run"`.

@@ -1,0 +1,34 @@
+---
+title: "Building a Website That's Also a World"
+slug: hello-world
+excerpt: Why I built a personal site with two views and what I learned along the way.
+date: "2025-07-01"
+categories:
+  - dev
+tags:
+  - next-js
+  - architecture
+  - pixel-art
+---
+
+Every developer eventually builds a personal website. Most of us build it three or four times, actually, because the first version is always embarrassing in retrospect. This is my latest attempt, and it's a bit different from the usual portfolio template.
+
+The idea was simple: what if a personal site had two ways to experience the same content? A classic professional view for people who want information fast, and a pixel-art world for people who want to explore. Same content underneath, two completely different interfaces on top.
+
+## The Architecture Rabbit Hole
+
+The interesting part isn't the pixel art — it's the content system. Every piece of content lives in one place: MDX files for long-form text, YAML for structured data. The classic view reads from it. The world reads from it. Neither view owns the content, and neither duplicates it.
+
+This means adding a new project is just creating a file with the right frontmatter. No code changes, no redeployment logic, no CMS. The content loader validates everything at build time with TypeScript types, so if you forget a required field, the build tells you before production does.
+
+## Phaser Meets Next.js
+
+Getting Phaser and Next.js to coexist required some architectural discipline. Phaser owns the canvas and nothing else — no UI, no text overlays, no dialogue boxes. All of that is React with Tailwind, positioned with CSS over the canvas. Zustand handles the communication: Phaser emits events, React responds.
+
+It sounds clean on paper. In practice, it took a few iterations to stop Phaser from trying to own things it shouldn't. The rule is simple: if a user needs to read text or click a button, that's React's job.
+
+## What's Next
+
+The agent platform is the next big piece. AI entities that live in the world, have profiles in the agentdex, and can actually hold conversations. Built on the Vercel AI SDK so the provider is swappable. The sales agent is already defined — it just needs its software implementation wired up.
+
+But that's a story for another post. For now, the foundation is solid: content system works, loaders are typed, the world renders, and Totti has his sprite. That's enough for a first post.

@@ -1,0 +1,237 @@
+# Implementation Plan: Content Loader
+
+## Overview
+
+Build the content loading layer in `src/lib/content/` — shared utility core (file discovery, validation, sorting, branded casting), thin per-type loader wrappers for MDX and YAML content, stub loaders for world engine types, MDX rendering utility, barrel export, and 5 seed content files. All code is TypeScript strict mode, tested with Vitest + fast-check PBT.
+
+## Tasks
+
+- [ ] 1. Install runtime dependencies and set up content module structure
+  - [x] 1.1 Install `gray-matter`, `js-yaml`, `next-mdx-remote` as production dependencies and `@types/js-yaml` as dev dependency using pnpm
+    - Install `fast-check` as dev dependency for property-based testing
+    - Verify `pnpm build` still compiles without errors
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  - [x] 1.2 Create the `src/lib/content/` directory structure with empty module files
+    - Create `src/lib/content/utils/` directory
+    - Create placeholder files: `file-discovery.ts`, `validation.ts`, `sorting.ts`, `branded.ts` in `utils/`
+    - Create placeholder files: `pages.ts`, `projects.ts`, `blog.ts`, `services.ts`, `agents.ts`, `locations.ts`, `characters.ts`, `dialogues.ts`, `mdx.ts`, `index.ts`
+    - _Requirements: 9.1_
+
+- [ ] 2. Implement file discovery utility
+  - [x] 2.1 Implement `src/lib/content/utils/file-discovery.ts`
+    - Implement `getContentRoot()` using `process.cwd()` — must be mockable for tests (accept optional root parameter)
+    - Implement `ContentDirConfig` and `RawContentFile` interfaces
+    - Implement `listContentFiles(config)`: read directory, filter by extensions, skip `_` prefix and `.gitkeep`, parse each file (gray-matter for `.mdx`, js-yaml for `.yaml`, JSON.parse for `.json`), derive slug from filename
+    - Implement `readContentFileBySlug(config, slug)`: construct path from slug, try each extension, return parsed file or null
+    - Wrap parse errors with format: `Content parse error: <file-path> — <parser-error-message>`
+    - Return `[]` for missing/empty directories (catch `ENOENT`), return `null` for missing files in by-slug
+    - _Requirements: 2.1, 2.2, 4.1, 4.2, 11.1, 11.2, 12.1, 12.2, 12.3, 13.1, 13.2, 13.3, 13.4, 13.5, 6.4, 6.5, 6.6_
+  - [x] 2.2 Write property test for file discovery extension filtering and skip rules
+    - **Property 1: File discovery respects extension filter and skip rules**
+    - **Validates: Requirements 2.1, 2.2, 4.1, 4.2, 13.1, 13.2, 13.3, 13.4**
+    - Test file: `src/lib/content/__tests__/file-discovery.test.ts`
+    - Generate random sets of filenames with mixed extensions and prefixes, write to temp dir, assert only valid files returned
+  - [x] 2.3 Write property test for directory resilience
+    - **Property 14: Directory resilience — missing or empty directory returns empty array**
+    - **Validates: Requirements 12.1, 12.2**
+    - Test file: `src/lib/content/__tests__/file-discovery.test.ts`
+    - Generate random content type configs pointing to non-existent or empty directories, assert empty array
+  - [x] 2.4 Write unit tests for parse error formatting and `.yml` exclusion
+    - **Property 11: Unparseable file throws with correct format**
+    - **Validates: Requirements 6.4, 6.5, 6.6, 13.2**
+    - Test file: `src/lib/content/__tests__/file-discovery.test.ts`
+    - Test malformed YAML, malformed JSON, broken frontmatter throw with `Content parse error:` format
+    - Test `.yml` files are ignored in agent directory
+
+- [ ] 3. Implement validation utility
+  - [x] 3.1 Implement `src/lib/content/utils/validation.ts`
+    - Implement `ValidationConfig` interface with `requiredFields` and `arrayFields`
+    - Implement `validateContent(data, filePath, fileSlug, config)`: check required fields present and non-null/non-undefined, check array fields are arrays, check declared slug matches filename-derived slug
+    - Error formats: `Content validation error: <file-path> is missing required field "<field-name>"`, `Content validation error: <file-path> field "<field-name>" must be an array`, `Content validation error: <file-path> declared slug "<declared-slug>" does not match filename-derived slug "<filename-slug>"`
+    - _Requirements: 6.1, 6.2, 6.3, 6.7, 6.8, 6.9, 13.6_
+  - [x] 3.2 Write property test for missing/null required field validation
+    - **Property 9: Missing or null required field throws with correct format**
+    - **Validates: Requirements 6.1, 6.2, 6.7**
+    - Test file: `src/lib/content/__tests__/validation.test.ts`
+    - For each content type, generate valid data then remove or nullify a random required field, assert correct error
+  - [x] 3.3 Write property test for non-array value on array field
+    - **Property 10: Non-array value for array field throws with correct format**
+    - **Validates: Requirements 6.3**
+    - Test file: `src/lib/content/__tests__/validation.test.ts`
+    - For each content type with array fields, replace a random array field with a non-array value, assert correct error
+  - [x] 3.4 Write property test for slug mismatch
+    - **Property 13: Slug mismatch throws**
+    - **Validates: Requirements 13.6**
+    - Test file: `src/lib/content/__tests__/validation.test.ts`
+    - Generate pairs of (filename-slug, declared-slug) where they differ, assert error with correct format
+
+- [ ] 4. Implement branded type casting utility
+  - [x] 4.1 Implement `src/lib/content/utils/branded.ts`
+    - Implement `BrandedFieldMap` interface with `slugFields`, `dateFields`, `assetFields`, `slugArrayFields`
+    - Implement `applyBrandedCasts(data, fieldMap)`: cast fields to `Slug`, `IsoDateString`, `AssetPath` branded types, handle `Slug[]` arrays
+    - Agent nested fields (`world.location`, `world.sprite`, `world.dialogueId`) are deferred to the world engine phase — do NOT cast them in this spec. Document the deferral with a code comment.
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [x] 4.2 Write property test for branded type casting
+    - **Property 12: Branded type casting preserves values**
+    - **Validates: Requirements 7.1, 7.2, 7.3, 7.4**
+    - Test file: `src/lib/content/__tests__/branded.test.ts`
+    - Runtime value preservation: generate valid content objects with string values for branded fields, verify values are preserved after casting via Vitest assertions (runtime equality)
+    - Compile-time type correctness: verify branded fields have correct types (`Slug`, `IsoDateString`, `AssetPath`) via `expectTypeOf` — separate from runtime assertions
+
+- [ ] 5. Implement sorting comparators
+  - [x] 5.1 Implement `src/lib/content/utils/sorting.ts`
+    - Implement `compareBlogPosts(a, b)`: date descending, then title ascending (case-insensitive)
+    - Implement `compareProjects(a, b)`: order ascending (0 valid, undefined → Infinity), then title ascending (case-insensitive)
+    - Implement `compareServices(a, b)`: order ascending (0 valid, undefined → Infinity), then title ascending (case-insensitive)
+    - Implement `comparePages(a, b)`: title ascending (case-insensitive)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 5.2 Write property test for blog post sorting
+    - **Property 5: Blog post date-then-title sorting**
+    - **Validates: Requirements 3.1**
+    - Test file: `src/lib/content/__tests__/sorting.test.ts`
+    - Generate arrays of `{ date, title }` pairs, sort with comparator, assert date desc then title asc
+  - [x] 5.3 Write property test for project sorting
+    - **Property 6: Project order-then-title sorting**
+    - **Validates: Requirements 3.2**
+    - Test file: `src/lib/content/__tests__/sorting.test.ts`
+    - Generate arrays with random `order` (including 0 and undefined) and titles, assert order asc then title asc
+  - [x] 5.4 Write property test for service sorting
+    - **Property 7: Service order-then-title sorting**
+    - **Validates: Requirements 3.3**
+    - Test file: `src/lib/content/__tests__/sorting.test.ts`
+    - Generate arrays with random `order` (including 0 and undefined) and titles, assert order asc then title asc
+  - [x] 5.5 Write property test for page sorting
+    - **Property 8: Page title sorting**
+    - **Validates: Requirements 3.4**
+    - Test file: `src/lib/content/__tests__/sorting.test.ts`
+    - Generate arrays of `{ title }`, sort with comparator, assert title asc (case-insensitive)
+  - [x] 5.6 Write unit test for order 0 edge case
+    - Verify `order: 0` sorts before `order: 1` and `order: undefined` sorts last
+    - Test file: `src/lib/content/__tests__/sorting.test.ts`
+    - _Requirements: 3.2, 3.3_
+
+- [x] 6. Checkpoint — Ensure all utility tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 7. Implement MDX content loaders
+  - [x] 7.1 Implement `src/lib/content/pages.ts`
+    - Import `RawContentFile` type from `./utils/file-discovery` (used to type the `toPage` parameter)
+    - Configure `DIR_CONFIG`, `VALIDATION`, `BRANDED` for Page type
+    - Implement `toPage(raw: RawContentFile)`: validate → cast → return typed Page with `content` field
+    - Export `getPages()`: list files → map toPage → sort with `comparePages`
+    - Export `getPageBySlug(slug: string)`: read by slug → toPage or null
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.4, 6.9, 6.10_
+  - [x] 7.2 Implement `src/lib/content/projects.ts`
+    - Import `RawContentFile` type from `./utils/file-discovery` (used to type the `toProject` parameter)
+    - Configure for Project type: required fields `title, slug, description, stack, categories, status, highlight`, array fields `stack, categories`
+    - Branded fields: `slug` → Slug, `image` → AssetPath
+    - Sort with `compareProjects`
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.2, 6.9, 6.10_
+  - [x] 7.3 Implement `src/lib/content/blog.ts`
+    - Import `RawContentFile` type from `./utils/file-discovery` (used to type the `toBlogPost` parameter)
+    - Configure for BlogPost type: required fields `title, slug, excerpt, date, categories, tags`, array fields `categories, tags`
+    - Branded fields: `slug` → Slug, `date` → IsoDateString, `image` → AssetPath, `relatedProjects` → Slug[], `relatedAgents` → Slug[]
+    - Sort with `compareBlogPosts`
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 6.9, 6.10_
+  - [x] 7.4 Implement `src/lib/content/services.ts`
+    - Import `RawContentFile` type from `./utils/file-discovery` (used to type the `toService` parameter)
+    - Configure for Service type: required fields `title, slug, description`
+    - Branded fields: `slug` → Slug, `relatedProjects` → Slug[]
+    - Sort with `compareServices`
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.3, 6.9, 6.10_
+  - [x] 7.5 Write property tests for MDX parsing round trip
+    - **Property 2: MDX parsing round trip**
+    - **Validates: Requirements 2.3, 2.4, 2.6**
+    - Test files: `src/lib/content/__tests__/pages.test.ts`, `projects.test.ts`, `blog.test.ts`, `services.test.ts`
+    - Generate valid frontmatter and MDX body, write to temp files, parse and verify fields match
+  - [x] 7.6 Write property test for non-existent slug returns null
+    - **Property 4: Non-existent slug returns null**
+    - **Validates: Requirements 2.5, 4.4, 12.3**
+    - Test file: `src/lib/content/__tests__/pages.test.ts` (representative for all MDX types)
+    - Generate random slug strings, call by-slug on empty/missing directories, assert null
+  - [x] 7.7 Write unit test for fail-fast on first invalid file
+    - Create 3 files where second is invalid, assert error thrown (not partial results)
+    - Test file: `src/lib/content/__tests__/pages.test.ts`
+    - _Requirements: 6.10_
+
+- [ ] 8. Implement YAML content loader for agents
+  - [x] 8.1 Implement `src/lib/content/agents.ts`
+    - Import `RawContentFile` type from `./utils/file-discovery` (used to type the `toAgent` parameter)
+    - Configure for Agent type: extensions `['.yaml', '.json']`, required fields `name, slug, role, personality, capabilities, status`, array fields `capabilities`
+    - Branded fields: `slug` → Slug, `portrait` → AssetPath (nested `world` sub-object casting deferred to world engine spec)
+    - Export `getAgents()` and `getAgentBySlug(slug: string)`
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 6.9, 6.10_
+  - [x] 8.2 Write property test for YAML/JSON parsing round trip
+    - **Property 3: YAML/JSON parsing round trip**
+    - **Validates: Requirements 4.3, 4.5**
+    - Test file: `src/lib/content/__tests__/agents.test.ts`
+    - Generate valid Agent objects, write as YAML or JSON, parse and verify fields match
+
+- [ ] 9. Implement stub loaders, MDX rendering, and barrel export
+  - [x] 9.1 Implement stub loaders for `locations.ts`, `characters.ts`, `dialogues.ts`
+    - Each exports list function returning `[]` and by-slug function returning `null`
+    - Include code comment: `// Implementation deferred to the world engine spec.`
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [x] 9.2 Implement MDX rendering utility at `src/lib/content/mdx.ts`
+    - Import `MDXRemote` from `next-mdx-remote/rsc`
+    - Export `renderMDX(source: string)` that returns `MDXRemote({ source })`
+    - _Requirements: 8.1, 8.2, 8.3_
+  - [x] 9.3 Implement barrel export at `src/lib/content/index.ts`
+    - Re-export all list and by-slug functions from all loader modules
+    - Re-export `renderMDX` from `mdx.ts`
+    - Re-export stub functions from `locations.ts`, `characters.ts`, `dialogues.ts`
+    - _Requirements: 9.1, 9.2, 9.3, 9.4_
+  - [x] 9.4 Write unit tests for stub loaders and barrel export
+    - Verify stub loaders return `[]` and `null`
+    - Verify barrel export re-exports all expected functions
+    - Test files: `src/lib/content/__tests__/stubs.test.ts`, `src/lib/content/__tests__/barrel.test.ts`
+    - _Requirements: 5.1, 5.2, 5.3, 9.1, 9.2, 9.3, 9.4_
+  - [x] 9.5 Write property test for MDX rendering
+    - **Property 15: MDX rendering accepts string and produces output**
+    - **Validates: Requirements 8.3**
+    - Test file: `src/lib/content/__tests__/mdx.test.ts`
+    - Generate simple valid MDX strings, call render utility, assert no throw and output is truthy
+
+- [x] 10. Checkpoint — Ensure all loader tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 11. Create seed content files
+  - [x] 11.1 Create `content/pages/about.mdx` — Lorenzo's about page
+    - Real biographical content, all required fields (`title`, `slug`), ≥50 chars non-whitespace body
+    - Filename matches slug field, no forbidden substrings (lorem ipsum, placeholder, TODO, TBD)
+    - _Requirements: 10.1, 10.2, 10.3, 10.5_
+  - [x] 11.2 Create `content/projects/personal-website.mdx` — This project
+    - `status: in-progress`, `highlight: true`, all required fields, `stack` and `categories` as arrays
+    - Real project description, ≥50 chars body
+    - _Requirements: 10.1, 10.2, 10.3, 10.5_
+  - [x] 11.3 Create `content/blog/hello-world.mdx` — First blog post
+    - All required fields including valid `date`, `categories` and `tags` as arrays
+    - Real content, ≥50 chars body
+    - _Requirements: 10.1, 10.2, 10.3, 10.5_
+  - [x] 11.4 Create `content/agents/sales-agent.yaml` — Sales/estimation agent
+    - `status: coming-soon`, all required fields, `capabilities` as array
+    - Real agent definition
+    - _Requirements: 10.1, 10.3, 10.5_
+  - [x] 11.5 Create `content/services/fullstack-development.mdx` — Full-stack dev service
+    - All required fields, real service description, ≥50 chars body
+    - _Requirements: 10.1, 10.2, 10.3, 10.5_
+  - [x] 11.6 Write seed content integration tests
+    - Load each seed file through the content loader, assert no validation errors
+    - Verify MDX body ≥50 non-whitespace chars, no forbidden substrings
+    - Verify filename matches declared slug, no `_` prefix conflicts
+    - Verify dependency packages exist in `package.json`
+    - Test file: `src/lib/content/__tests__/seed-content.test.ts`
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 1.1, 1.2, 1.3, 1.4_
+
+- [x] 12. Final checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation
+- Property tests validate universal correctness properties from the design document
+- Unit tests validate specific examples and edge cases
+- All file I/O uses `process.cwd()` base path — tests use temp directories via mockable root parameter
+- Branded types are compile-time only; casting is a no-op at runtime but ensures type safety downstream
