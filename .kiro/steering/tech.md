@@ -79,3 +79,18 @@ Il progetto ha accesso al server MCP **Context7** che fornisce documentazione ag
 **Regola pratica:** se stai per scrivere codice che dipende da un'API esterna e non sei sicuro al 100% della sintassi/comportamento nella versione installata, consulta Context7 prima di procedere.
 
 → Full doc: `context/docs/tech-stack.md`
+
+## Asset Stack
+
+| Decisione | Scelta |
+|---|---|
+| Tile size | 32×32 |
+| Base ecosystem | LimeZu Modern series (Exteriors, Interiors, Office, UI) |
+| Character companion | Revouger Brown Dog + Pet Props |
+| Approccio | Solo pack, nessun asset custom |
+| Map editor | Tiled (per costruire le mappe con i tileset) |
+| Vista | ¾ top-down (stile LimeZu) |
+| Palette | Derivata da LimeZu — singola palette, no dark/light |
+
+→ Full decision log: `context/asset-strategy.md`
+→ Pack mapping: `context/asset-pack-mapping.md`

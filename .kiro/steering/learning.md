@@ -15,43 +15,43 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
-### Prettier errors on unmatched content glob
-**What went wrong:** `pnpm format` failed with exit code 2 because `content/**/*.{md,mdx,yaml,yml,json}` matched zero files (only `.gitkeep` files exist).
-**Why:** Prettier treats no-match globs as errors by default.
-**Correct approach:** Add `--no-error-on-unmatched-pattern` flag to both `format` and `format:check` scripts.
+### Subagent inconsistency: readonly modifiers on entity interfaces
+**What went wrong:** Subagent added `readonly` to all `BlogPost` fields while other entity interfaces (Page, Project, Agent, Service) didn't use `readonly`.
+**Why:** No explicit constraint in the subagent prompt about `readonly` consistency for the first few tasks; added it after noticing the drift.
+**Correct approach:** When delegating entity type creation to subagents, explicitly state style constraints (e.g. "do NOT use `readonly`") to maintain consistency across files. Catch drift early.
 
-### import.meta.dirname is undefined under tsx CJS transform
-**What went wrong:** `import.meta.dirname` returned `undefined` when running a `.ts` file via `npx tsx`, causing `path.join` to throw.
-**Why:** `tsx` transpiles to CJS by default; `import.meta.dirname` is only available in native ESM (Node ≥ 21.2).
-**Correct approach:** Use `dirname(fileURLToPath(import.meta.url))` which works in both CJS-transpiled and native ESM contexts.
+### expectTypeOf + branded types: toEqualTypeOf fails with `Slug | undefined` under tsc
+**What went wrong:** `expectTypeOf<Narrowed['agentSlug']>().toEqualTypeOf<Slug | undefined>()` passed in Vitest runtime but failed under `tsc --noEmit` because `Slug | undefined` doesn't satisfy the branded type constraint in `expect-type`'s generic.
+**Why:** Vitest's type checker and `tsc` handle branded type unions differently in `toEqualTypeOf` constraints. The `undefined` in the union breaks the constraint check.
+**Correct approach:** Use `.not.toEqualTypeOf<Slug>()` to verify the optional field differs from the required case, avoiding the branded-type-plus-undefined constraint issue.
 
-### create-next-app refuses non-empty directories
-**What went wrong:** `pnpm create next-app .` fails with "contains files that could conflict" when existing files/dirs are present (even unrelated ones like `context/`, `.kiro/`).
-**Why:** The scaffolder checks for any existing files, not just conflicting ones.
-**Correct approach:** Scaffold into a temp directory, then move generated files into the project root. Back up and restore files that must be preserved (`.gitignore`).
+### [Consolidated] Spec authoring lessons (from bootstrap + content-entity-types specs)
+- **Requirements**: describe outcomes, not implementation. No filenames, config flags, or duplicated verification gates. Every AC must add a non-trivial constraint.
+- **Design docs**: prescribe principles, not exact current state. Use "in this design..." not "the only import is...". Role/purpose/choices — not near-complete file contents or hardcoded versions.
+- **Inter-type invariants**: classify as type-level (TS enforced), runtime (content loader), or documentation-only.
+- **Testing**: pure type modules use `tsc --noEmit` + `expectTypeOf`, not PBT. Reserve fast-check for runtime logic.
+- **Scripts**: always have both `format` (write) and `format:check` (CI). Use `--no-error-on-unmatched-pattern` for Prettier globs.
 
-### Design doc too prescriptive — config snippets belong in tasks
-**What went wrong:** First design doc included near-complete file contents (tsconfig, eslint config, package.json scripts/deps) and hardcoded version numbers (Next.js 15, Tailwind v4, ESLint flat config with FlatCompat).
-**Why:** Blurred the line between design decisions and implementation steps. Hardcoded versions that should be determined by the scaffolder.
-**Correct approach:** Design doc describes role, purpose, and architectural choices for each file. Exact contents and versions go in implementation tasks. Anchor version choices to steering files or "determined by scaffolder" rather than hardcoding.
-
-### Missing format:check script for CI verification
-**What went wrong:** Design had `format` (write mode) but verification gates referenced `pnpm format --check`, which doesn't match the script definition.
-**Why:** Didn't think through the write vs check distinction when defining scripts.
-**Correct approach:** Two separate scripts: `format` (write, developer use) and `format:check` (exits non-zero if unformatted, CI use).
-
-### Requirements mixed product intent with implementation details
-**What went wrong:** First draft of `requirements.md` included specific filenames (`tailwind.config.ts`, `.prettierrc`, `pnpm-lock.yaml`), config flags (`"strict": true`), and duplicated verification criteria across R3 and R7.
-**Why:** Treated the spec prompt as requirements verbatim instead of separating "what" from "how".
-**Correct approach:** Requirements describe outcomes and constraints. Implementation details (file names, config syntax) belong in the design doc. Verification gates are cross-cutting checks, not standalone requirements. Reference steering files instead of duplicating their content.
+### [Consolidated] Bootstrap tooling gotchas
+- `create-next-app` refuses non-empty dirs → scaffold into temp dir, then move files.
+- `import.meta.dirname` is undefined under `tsx` CJS transform → use `dirname(fileURLToPath(import.meta.url))`.
+- Prettier exits non-zero on unmatched globs → `--no-error-on-unmatched-pattern`.
 
 ## Decisions Log
 
+### Vitest as project test runner
+Vitest chosen as the test runner. Type-level tests use `expectTypeOf`. Test script: `"test": "vitest run"`.
+
+### Branded type pattern for semantic aliases
+`string & { readonly __brand: unique symbol }` — not directly assignable from `string` without explicit cast.
+
+### Content type architecture decisions
+- Type-only modules: `tsc --noEmit` + `expectTypeOf`, not PBT
+- `DialogueId` and `LineId` as domain-specific branded aliases alongside `Slug`, `IsoDateString`, `AssetPath`
+- `Dialogue.speaker` typed as `Slug` (all speakers are Characters; documented escape hatch for future non-Character speakers)
+- Validation technology deferred to content-loader spec
+- Three-tier guarantee classification: type-level, runtime, documentation-only
+- Character agent narrowing via TS discriminated union (`type === 'agent'` → `agentSlug` required)
+
 ### Next.js 16 + Tailwind v4 as bootstrap baseline
-Scaffolder produced Next.js 16.1.6, Tailwind 4.2.1, ESLint 9.39.4 (flat config), TypeScript 5.9.3. Tailwind v4 uses CSS-based config (`@import "tailwindcss"` + `@source` directives, no `tailwind.config.ts`). ESLint uses flat config format (`eslint.config.mjs`).
-
-### ESLint config format follows scaffolder
-The ESLint config format (flat vs legacy) is determined by the `create-next-app` scaffolder, not prescribed in the design. We use `eslint-config-next` regardless of format.
-
-### Prettier standalone, no ESLint integration
-Prettier runs separately via `format` and `format:check` scripts. No `eslint-plugin-prettier` or `eslint-config-prettier` to avoid conflicts.
+Next.js 16.1.6, Tailwind 4.2.1, ESLint 9.39.4 (flat config), TypeScript 5.9.3. Tailwind v4 uses CSS-based config. ESLint uses flat config. Prettier standalone (no ESLint integration).
