@@ -1,0 +1,47 @@
+# Dialogue Template
+# Copy this file, rename to your-id.yaml, and fill in the fields.
+#
+# The lines array below shows four different line shapes:
+# 1. Simple line (just text and next pointer)
+# 2. Line with choices (branching options)
+# 3. Line with a direct action (auto-trigger)
+# 4. Line with a condition (conditional display)
+
+id: "dialogue-id" # REQUIRED — DialogueId (unique dialogue identifier)
+speaker: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe; primary speaker Character slug)
+lines: # REQUIRED — DialogueLine[]
+
+  # --- Simple line: just text with a pointer to the next line ---
+  - id: "line-1" # REQUIRED — LineId (unique within this dialogue)
+    speaker: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe; Character slug of this line's speaker)
+    text: "Hello! Welcome." # REQUIRED — string
+    nextLineId: "line-2" # OPTIONAL — LineId (next line to display)
+
+  # --- Line with choices: branching options for the player ---
+  - id: "line-2" # REQUIRED — LineId (unique within this dialogue)
+    speaker: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+    text: "What would you like to know?" # REQUIRED — string
+    choices: # OPTIONAL — DialogueChoice[]
+      - text: "Tell me about projects" # REQUIRED (if choice) — string
+        nextLineId: "line-3" # OPTIONAL — LineId (next line after this choice)
+        action: # OPTIONAL — DialogueAction (action triggered by this choice)
+          type: "open_page" # REQUIRED (if action) — ActionType: "open_page" | "open_project" | "start_dialogue" | "start_chat" | "open_agent_profile"
+          target: "projects" # REQUIRED (if action) — Slug (kebab-case, URL-safe)
+      - text: "Start a chat" # REQUIRED (if choice) — string
+        action: # OPTIONAL — DialogueAction
+          type: "start_chat" # REQUIRED (if action) — ActionType: "open_page" | "open_project" | "start_dialogue" | "start_chat" | "open_agent_profile"
+          target: "agent-slug" # REQUIRED (if action) — Slug (kebab-case, URL-safe)
+
+  # --- Line with a direct action: auto-triggers when displayed ---
+  - id: "line-3" # REQUIRED — LineId (unique within this dialogue)
+    speaker: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+    text: "Let me show you this project." # REQUIRED — string
+    action: # OPTIONAL — DialogueAction (auto-trigger action)
+      type: "open_project" # REQUIRED (if action) — ActionType: "open_page" | "open_project" | "start_dialogue" | "start_chat" | "open_agent_profile"
+      target: "project-slug" # REQUIRED (if action) — Slug (kebab-case, URL-safe)
+
+  # --- Line with a condition: only displayed when condition is met ---
+  - id: "line-4" # REQUIRED — LineId (unique within this dialogue)
+    speaker: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+    text: "I see you've been to the shop!" # REQUIRED — string
+    condition: "hasVisited:shop" # OPTIONAL — string (runtime expression; grammar deferred to dialogue engine spec)

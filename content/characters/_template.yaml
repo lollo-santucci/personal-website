@@ -1,0 +1,19 @@
+# Character Template
+# Copy this file, rename to your-slug.yaml, and fill in the fields.
+#
+# Discriminated union: when type is "agent", agentSlug is REQUIRED.
+# For all other types (player, companion, npc, merchant), agentSlug is OPTIONAL.
+
+name: "Character Name" # REQUIRED — string
+slug: "character-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+type: "npc" # REQUIRED — CharacterType: "player" | "companion" | "agent" | "npc" | "merchant"
+behavior: "stationary" # REQUIRED — BehaviorType: "controllable" | "follower" | "stationary" | "patrol"
+sprite: "character-sprite" # OPTIONAL — AssetPath (file path to sprite)
+animations: # OPTIONAL — string[]
+  - "idle"
+  - "walk"
+position: { x: 0, y: 0 } # OPTIONAL — Position2D
+location: "ufficio" # OPTIONAL — Slug (kebab-case, URL-safe; location slug, Italian)
+dialogueIds: # OPTIONAL — string[]
+  - "dialogue-id"
+agentSlug: "agent-slug" # CONDITIONAL — Slug (kebab-case, URL-safe; REQUIRED when type is "agent", OPTIONAL otherwise)

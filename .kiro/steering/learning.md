@@ -25,17 +25,23 @@ This file tracks mistakes, corrections, and decisions made during development. *
 **Why:** Vitest's type checker and `tsc` handle branded type unions differently in `toEqualTypeOf` constraints. The `undefined` in the union breaks the constraint check.
 **Correct approach:** Use `.not.toEqualTypeOf<Slug>()` to verify the optional field differs from the required case, avoiding the branded-type-plus-undefined constraint issue.
 
-### [Consolidated] Spec authoring lessons (from bootstrap + content-entity-types specs)
+### [Consolidated] Spec authoring lessons (from bootstrap, content-entity-types, content-directory-templates specs)
 - **Requirements**: describe outcomes, not implementation. No filenames, config flags, or duplicated verification gates. Every AC must add a non-trivial constraint.
-- **Design docs**: prescribe principles, not exact current state. Use "in this design..." not "the only import is...". Role/purpose/choices — not near-complete file contents or hardcoded versions.
+- **Requirements vs design boundary**: field matrices and verifiable checklists belong in requirements; placeholder values, comment wording, and formatting details are design decisions — defer them explicitly.
+- **Verifiability**: "match exactly" is vague. Use explicit field matrices (field, required?, type, notes) derived from actual source code. For discriminated unions, state whether template shows superset or per-branch files.
+- **Source precedence**: when a spec references multiple sources (TS types, steering files, docs), declare explicit precedence. Include all relevant steering files — don't omit `structure.md` when naming conventions matter.
+- **Dependencies on future specs**: when an AC depends on code that doesn't exist yet (e.g. content loader), call it out as a dependency note rather than stating it as a verifiable fact.
+- **Design docs**: prescribe structural constraints, not editorial style. Field ordering, comment header wording, YAML syntax choices (inline vs block) are implementation details — defer them explicitly.
+- **Testing calibration**: for specs with a small, fixed input domain (e.g. 8 static files), use parameterized unit tests, not `fast-check` PBT. Reserve PBT for runtime logic with large/random input spaces.
 - **Inter-type invariants**: classify as type-level (TS enforced), runtime (content loader), or documentation-only.
-- **Testing**: pure type modules use `tsc --noEmit` + `expectTypeOf`, not PBT. Reserve fast-check for runtime logic.
 - **Scripts**: always have both `format` (write) and `format:check` (CI). Use `--no-error-on-unmatched-pattern` for Prettier globs.
 
 ### [Consolidated] Bootstrap tooling gotchas
 - `create-next-app` refuses non-empty dirs → scaffold into temp dir, then move files.
 - `import.meta.dirname` is undefined under `tsx` CJS transform → use `dirname(fileURLToPath(import.meta.url))`.
 - Prettier exits non-zero on unmatched globs → `--no-error-on-unmatched-pattern`.
+- Complex inline `node -e "..."` scripts fail in zsh with quoting issues → write to a temp `.mjs` file instead.
+- `js-yaml` is not installed in this project → for ad-hoc YAML validation scripts, use Node built-ins or string parsing.
 
 ## Decisions Log
 
@@ -52,6 +58,9 @@ Vitest chosen as the test runner. Type-level tests use `expectTypeOf`. Test scri
 - Validation technology deferred to content-loader spec
 - Three-tier guarantee classification: type-level, runtime, documentation-only
 - Character agent narrowing via TS discriminated union (`type === 'agent'` → `agentSlug` required)
+
+### Template-TypeScript alignment tests use hand-maintained metadata map
+For the 8 content type templates, tests use a hand-maintained `CONTENT_TYPES` metadata map (field names, optionality, enum values, branded types) rather than AST-parsing TS interfaces at test time. The domain is small and stable — AST parsing would add complexity and a `typescript` API dependency for no real benefit. Update the map when interfaces change.
 
 ### Next.js 16 + Tailwind v4 as bootstrap baseline
 Next.js 16.1.6, Tailwind 4.2.1, ESLint 9.39.4 (flat config), TypeScript 5.9.3. Tailwind v4 uses CSS-based config. ESLint uses flat config. Prettier standalone (no ESLint integration).

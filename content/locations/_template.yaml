@@ -1,0 +1,22 @@
+# Location Template
+# Copy this file, rename to your-slug.yaml, and fill in the fields.
+
+name: "Location Name" # REQUIRED — string
+slug: "ufficio" # REQUIRED — Slug (kebab-case, URL-safe; Italian names: casa, edicola, shop, ufficio, piazza)
+description: "What this place is" # REQUIRED — string
+type: "interior" # REQUIRED — LocationType: "interior" | "exterior" | "transition"
+tileset: "location-tileset" # OPTIONAL — AssetPath (file path to tileset)
+characters: # OPTIONAL — Slug[] (character slugs present here)
+  - "character-slug"
+objects: # OPTIONAL — InteractiveObject[] (interactive objects in this location)
+  - id: "object-id" # REQUIRED (if object) — string
+    name: "Object Name" # REQUIRED (if object) — string
+    position: { x: 0, y: 0 } # REQUIRED (if object) — Position2D
+    action: # REQUIRED (if object) — DialogueAction
+      type: "open_page" # REQUIRED — ActionType: "open_page" | "open_project" | "start_dialogue" | "start_chat" | "open_agent_profile"
+      target: "page-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+transitions: # OPTIONAL — LocationTransition[] (connections to other locations)
+  - target: "other-location-slug" # REQUIRED (if transition) — Slug (kebab-case, URL-safe)
+    position: { x: 0, y: 0 } # REQUIRED (if transition) — Position2D
+    direction: "north" # OPTIONAL — TransitionDirection: "north" | "south" | "east" | "west" | "up" | "down"
+contentSection: "about" # OPTIONAL — string (linked content section)

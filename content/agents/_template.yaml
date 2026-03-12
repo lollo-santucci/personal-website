@@ -1,0 +1,22 @@
+# Agent Template
+# Copy this file, rename to your-slug.yaml, and fill in the fields.
+
+name: "Agent Name" # REQUIRED — string
+slug: "agent-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+role: "Brief role description" # REQUIRED — string
+personality: "Personality description" # REQUIRED — string
+capabilities: # REQUIRED — string[]
+  - "Capability one"
+status: "active" # REQUIRED — enum: "active" | "coming-soon" | "experimental"
+portrait: "/assets/agents/agent-slug.png" # OPTIONAL — AssetPath (file path to pixel-art portrait)
+world: # OPTIONAL — object (world presence in play view)
+  location: "ufficio" # REQUIRED (if world) — Slug (location slug, kebab-case, Italian)
+  sprite: "agent-slug-sprite" # OPTIONAL — AssetPath (sprite reference)
+  position: { x: 0, y: 0 } # OPTIONAL — Position2D
+  dialogueId: "agent-slug-intro" # OPTIONAL — DialogueId (dialogue identifier)
+software: # OPTIONAL — object (agent platform config)
+  availability: "available" # REQUIRED (if software) — enum: "available" | "disabled" | "coming-soon"
+  model: "claude-sonnet-4-6" # OPTIONAL — string (AI model identifier)
+  systemPrompt: "You are..." # OPTIONAL — string (system prompt for the agent)
+  tools: # OPTIONAL — string[]
+    - "tool-name"
