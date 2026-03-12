@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "Command Failure Logger",
+  "description": "After a shell command fails, logs the failure pattern to learning.md for future reference.",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A shell command just finished. Check the tool response:\n- If the command **succeeded** (exit code 0): Do nothing.\n- If the command **failed** (non-zero exit code): Add a concise entry to `.kiro/steering/learning.md` under '## Mistakes & Corrections' with format:\n  `### [Command]: [short description of failure]`\n  `**Command:** [the command that failed]`\n  `**Error:** [key error message]`\n  `**Fix:** [what worked instead, or 'investigating']`\n\nOnly log meaningful failures — not intentional test runs or expected errors. Be very concise (2-3 lines per entry)."
+  }
+}

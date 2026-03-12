@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "name": "Pre-Commit Safety Check",
+  "description": "Before committing, checks for sensitive files, placeholder content, and undocumented breaking changes.",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A shell command is about to run. Check if it is a `git commit` command.\n\n- If it is NOT a git commit: Do nothing. Let it proceed.\n- If it IS a git commit: Run these safety checks:\n  1. **Sensitive files**: Check staged files for `.env`, credentials, API keys, or secrets. If found, BLOCK the commit and warn Lorenzo.\n  2. **Placeholder content**: Check staged content files for lorem ipsum, 'TODO', 'TBD', 'coming soon', or empty frontmatter fields.\n  3. **Large files**: Check for binary files or assets over 1MB that shouldn't be in git.\n\nIf critical issues found (secrets, credentials): Report and recommend unstaging those files.\nIf minor issues found (placeholder text): Report as warnings but don't block.\nIf everything is clean: Do nothing."
+  }
+}

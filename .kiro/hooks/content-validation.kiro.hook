@@ -1,0 +1,13 @@
+{
+  "name": "Content File Validation",
+  "description": "When a content file is created or saved, validates frontmatter, required fields, and naming conventions.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["content/**/*.mdx", "content/**/*.yaml", "content/**/*.yml", "content/**/*.json"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A content file was just saved. Validate it:\n\n1. **Filename**: Must be kebab-case. No spaces, no uppercase, no underscores.\n2. **Frontmatter/schema**: Check that required fields are present based on the content type:\n   - Projects: title, slug, description, stack, status\n   - Blog posts: title, slug, excerpt, date, categories\n   - Agents: name, slug, role, personality, capabilities, status\n   - Locations: name, slug, type, contentSection\n   - Characters: name, type, sprite, location\n   - Dialogues: id, speaker, lines\n3. **Slug consistency**: The slug field must match the filename (without extension).\n4. **No placeholder content**: Check for lorem ipsum, 'TODO', 'TBD', or 'coming soon' in content body.\n5. **Terminology**: Check that content uses official glossary terms (see glossary.md steering file).\n\nIf issues are found: Report them clearly to Lorenzo with specific fixes needed.\nIf everything is valid: Do nothing (no confirmation message needed)."
+  }
+}
