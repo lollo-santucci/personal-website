@@ -4,7 +4,7 @@ export default function Footer() {
       <p>© {new Date().getFullYear()} Lorenzo Santucci</p>
       <div className="mt-2 flex justify-center gap-4">
         <a
-          href="https://github.com/lorenzosantucci"
+          href="https://github.com/lollo-santucci"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-gray-900 underline-offset-2 hover:underline"

@@ -23,7 +23,7 @@ describe('Footer', () => {
   it('contains a GitHub link with correct href', () => {
     render(<Footer />);
     const link = screen.getByRole('link', { name: 'GitHub' });
-    expect(link).toHaveAttribute('href', 'https://github.com/lorenzosantucci');
+    expect(link).toHaveAttribute('href', 'https://github.com/lollo-santucci');
   });
 
   it('contains a LinkedIn link with correct href', () => {

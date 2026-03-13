@@ -1,0 +1,43 @@
+---
+title: ML Pipeline Toolkit
+slug: ml-pipeline-toolkit
+description: A Python framework for building, orchestrating, and monitoring ML data pipelines — from raw ingestion to feature store, with built-in lineage tracking.
+stack:
+  - Python
+  - Apache Airflow
+  - DVC
+  - PostgreSQL
+  - Docker
+  - FastAPI
+categories:
+  - ml
+  - data-engineering
+status: completed
+highlight: false
+links:
+  github: https://github.com/lollo-santucci/ml-pipeline-toolkit
+---
+
+Every ML project starts the same way: a Jupyter notebook that works perfectly on your laptop and falls apart the moment someone else touches it. This toolkit exists because I got tired of rebuilding the same pipeline scaffolding for every client engagement.
+
+## What It Does
+
+ML Pipeline Toolkit is a lightweight Python framework that handles the boring-but-critical parts of ML data pipelines. It provides a declarative way to define pipeline stages — ingestion, validation, transformation, feature extraction — and orchestrates them with dependency resolution and automatic retry logic.
+
+Each stage is a typed Python class with explicit input/output contracts. The framework validates data schemas between stages at runtime, so a breaking change in your feature engineering step gets caught before it silently corrupts your training set. If you've ever spent a weekend debugging why model accuracy dropped 15% only to discover a column rename three stages upstream, you understand the motivation.
+
+## Lineage and Reproducibility
+
+The toolkit tracks full data lineage: which raw files fed into which transformations, what parameters were used, and what the output artifacts look like. Every pipeline run produces a manifest that can reconstruct the exact data state at any point in the chain.
+
+This pairs with DVC for versioning large datasets and model artifacts. The integration is opinionated — pipeline configs reference DVC-tracked files directly, and the orchestrator knows how to pull the right versions before execution. No more "which version of the training data did we use for that model" conversations.
+
+## Monitoring and Observability
+
+Pipeline runs expose metrics through a FastAPI dashboard: stage durations, data volume per step, validation failure rates, and drift detection on feature distributions. Nothing fancy — just the numbers you actually need when something breaks at 3 AM and you're trying to figure out which stage is the bottleneck.
+
+The alerting layer is intentionally simple. Threshold-based alerts on stage duration and output row counts, with Slack and email hooks. I considered building something more sophisticated, but in practice, "this stage took 4x longer than usual" catches 90% of real problems.
+
+## Lessons Learned
+
+Building this taught me that the hard part of ML infrastructure isn't the ML — it's the plumbing. Schema validation between stages, idempotent retries, and clear error messages save more engineering hours than any model optimization trick. The framework reflects that priority: reliability first, cleverness second.

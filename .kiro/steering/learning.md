@@ -15,6 +15,96 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### JSX in .ts file causes TypeScript diagnostics
+**What went wrong:** `src/lib/content/mdx.ts` contained JSX (`<a>` elements in `MdxAnchor`) but used a `.ts` extension. TypeScript produced 13 parse errors because JSX is only valid in `.tsx` files.
+**Why:** When adding the `MdxAnchor` component to the previously JSX-free utility, the file wasn't renamed to `.tsx`.
+**Correct approach:** Any file that contains JSX must use `.tsx` extension. When adding JSX to an existing `.ts` file, rename it immediately. Use `smartRelocate` to update imports automatically.
+
+### Seed content used wrong GitHub username
+**What went wrong:** Seed content files (contact.mdx, ml-pipeline-toolkit.mdx) used `github.com/lorenzosantucci` instead of the correct `github.com/lollo-santucci`. Footer.tsx from Spec 5 also has the wrong URL.
+**Why:** Subagent generated plausible-looking URLs based on the persona name without verifying the actual GitHub handle.
+**Correct approach:** Personal identifiers (GitHub handle, LinkedIn URL, email) should be defined in a single source (steering file or env var) and referenced from there. Never guess usernames.
+
+### MDX-rendered external links missing target="_blank"
+**What went wrong:** Links in MDX content (contact page, blog posts, project descriptions) rendered as plain `<a>` tags without `target="_blank"`, violating Lorenzo's requirement that all external hrefs open in a new tab.
+**Why:** `renderMDX` used `next-mdx-remote` with no custom components. External link behavior wasn't specified in the spec.
+**Correct approach:** Added a custom `MdxAnchor` component to `renderMDX` that detects `http://` / `https://` hrefs and adds `target="_blank" rel="noopener noreferrer"`. All external links — both in MDX content and hardcoded in components — must open in new tabs.
+
+### Stale tests from previous specs break after page reimplementation
+**What went wrong:** After replacing the Spec 5 home page stub with the full content-driven implementation, the old test file (`src/__tests__/app/page.test.tsx`) failed because it tested the removed quickLinks/hardcoded heading pattern.
+**Why:** The old test wasn't removed or updated when the page was rewritten. The test suite caught it, but it should have been anticipated.
+**Correct approach:** When a spec replaces a page stub from a previous spec, check for and remove/update any existing tests for that stub before running the full suite. Search `src/__tests__/` for test files matching the modified route.
+
+### Parallel strReplace calls on overlapping text regions
+**What went wrong:** Two parallel `strReplace` calls targeted the same section of design.md. The first edit changed the text that the second edit was matching against, causing the second to fail with "oldStr not found."
+**Why:** Both edits touched the Error Handling / MdxContent section. The first edit changed `error.tsx` wording, which altered the text the second edit needed to match.
+**Correct approach:** When multiple edits target the same section or nearby text, run them sequentially (not in parallel). Only parallelize edits to clearly independent sections of a file.
+
+### Design doc: implementation notes belong in tasks, not design
+**What went wrong:** MDX error handling section included "during task execution, test this with intentionally broken MDX content" — an operational instruction that belongs in task descriptions, not the design doc.
+**Why:** Blurred the line between design decisions (what strategy to use) and task execution guidance (how to verify it works).
+**Correct approach:** Design docs state the strategy and acceptable fallbacks. Operational testing instructions ("test with broken content", "if X doesn't work, do Y") belong in the task that implements the feature.
+
+### Design doc: file map should account for error boundary files
+**What went wrong:** Design referenced `error.tsx` as an acceptable fallback for MDX failures but didn't include it in the file map or explicitly state it's not created by this spec.
+**Why:** Mentioned error.tsx as a concept without clarifying whether it's an existing file, a new file, or out of scope.
+**Correct approach:** If a design references a file as part of its error handling strategy, the file map must either include it (if created) or explicitly note it's not part of this spec's scope.
+
+### Design doc: missing steering alignment section
+**What went wrong:** Design doc didn't show how it inherits naming, file placement, import patterns, server/client boundaries, and testing conventions from steering files. Felt "self-contained" rather than workspace-native.
+**Why:** Focused on component architecture without explicitly connecting decisions to steering rules.
+**Correct approach:** Every design doc should include an "Alignment with Steering" section covering: naming/import conventions, file placement rationale, server/client boundaries, testing conventions, and which existing files are preserved vs replaced.
+
+### Design doc: over-optimistic MDX error handling without RSC feasibility check
+**What went wrong:** Design stated "each page wraps renderMDX in try/catch" as if it's guaranteed to work. In RSC, compilation errors during rendering may propagate before catch can intercept.
+**Why:** Assumed try/catch works uniformly in async server components without verifying against the actual RSC + next-mdx-remote behavior.
+**Correct approach:** State the preferred strategy, the acceptable fallback (error.tsx boundary), and flag it as "test during implementation." Don't promise resilience the stack may not support.
+
+### Design doc: all properties mapped to PBT without calibration
+**What went wrong:** Testing strategy said "each correctness property maps to a single property-based test" — including page-level properties (P5, P7, P9, P10, P13, P14, P15) where randomization adds complexity without proportional value.
+**Why:** Applied PBT uniformly instead of evaluating which properties benefit from random input generation vs fixed examples.
+**Correct approach:** Classify each property as PBT-friendly (pure functions, component rendering with varied entity data) or unit/integration (page-level rendering, fixed input domains, single failure modes). State the rationale for each classification.
+
+### Design doc: missing metadata centralization note
+**What went wrong:** Design described per-page metadata without noting that the root layout already provides site name, title template, and default description. Risk of duplicating logic across route files during implementation.
+**Why:** Didn't cross-reference the existing layout.tsx metadata setup when designing per-page metadata behavior.
+**Correct approach:** Document where shared metadata values live (layout.tsx) and what individual routes need to return (just title + description). Prevents task implementers from re-inventing the template.
+
+### Requirements doc: duplicate AC numbering after inserting new items
+**What went wrong:** After inserting a new AC4 in R9 (about page seed), the subsequent items kept the old numbers — two ACs numbered `5.`.
+**Why:** Manual renumbering after insertion is error-prone, especially in markdown numbered lists.
+**Correct approach:** After inserting or reordering ACs, always re-read the full requirement to verify sequential numbering. Markdown renderers auto-number, but raw text must be correct since specs are referenced by AC number.
+
+### Requirements doc: design-forward phrasing leaking into ACs
+**What went wrong:** ACs contained phrases like "The design SHALL specify the exact Intl.DateTimeFormat options", "The exact separator and site name are design decisions", "install command SHALL be documented in the design". These steer the design from within the requirements.
+**Why:** Tried to be helpful by flagging what the design needs to decide, but that's the design doc's job — requirements should state the behavioral outcome only.
+**Correct approach:** State the expected behavior (e.g., "human-readable long format"). If a dependency needs an installation plan, note it as a dependency constraint, not as an AC directing the design.
+
+### Requirements doc: implementation-specific names leaked into requirements
+**What went wrong:** Requirements referenced `Project_Card`, `MDX_Content`, `Status_Badge`, `renderMDX`, `@tailwindcss/typography` by name — these are design/implementation decisions, not behavioral outcomes.
+**Why:** The glossary defined component names and the ACs used them directly, blurring the requirements/design boundary.
+**Correct approach:** Requirements describe behaviors ("a reusable project card component", "typography styling", "Tailwind typography plugin"). Specific component names, function names, and library names belong in the design doc.
+
+### Requirements doc: ambiguous content source for home page value proposition
+**What went wrong:** R1 said "loaded from the Content_System" without specifying which entity provides the home page intro text. Ambiguous whether it's a Page entity, a hardcoded section, or something else.
+**Why:** The home page is a composite of multiple content sources, and the value proposition source wasn't pinned down.
+**Correct approach:** Define a specific entity source (e.g., "Page with slug `home`") and document the fallback behavior if that entity is absent.
+
+### Requirements doc: seed content minimum didn't exercise all behaviors
+**What went wrong:** R9 required "at least 2 blog posts" but R1 specified "Latest 3 Posts" on the home page. The seed minimum didn't fully exercise the home page behavior.
+**Why:** Seed content count was set generically without cross-referencing the consuming requirements.
+**Correct approach:** Set seed content minimums to match the maximum display count of any consuming page. If the home page shows 3 posts, seed at least 3.
+
+### Requirements doc: fallback titles not declared as exceptions
+**What went wrong:** R2 and R7 specified fallback titles ("About", "Contact") when content is missing, but R10 (no hardcoded text) didn't acknowledge these as permitted exceptions.
+**Why:** Fallback behavior and the no-hardcoded-text rule were written independently without cross-referencing.
+**Correct approach:** Explicitly declare fallback titles as a named exception category in the no-hardcoded-text requirement.
+
+### Requirements doc: missing behavioral details deferred to implementation
+**What went wrong:** Date format locale, metadata title pattern, MDX rendering failure behavior, and optional field display policy (image, relatedProjects) were all unspecified — leaving implementation to make undocumented decisions.
+**Why:** Treated these as "obvious" implementation details rather than behavioral contracts that affect user experience.
+**Correct approach:** Specify: date locale and format style, metadata title template pattern, graceful degradation for MDX failures, and explicit show/omit policy for each optional entity field displayed on detail pages.
+
 ### Design doc: new dependency introduced without explicit installation plan
 **What went wrong:** `@tailwindcss/typography` was mentioned as "(If not yet installed, this spec adds it)" without specifying the install command, CSS registration syntax, or listing `package.json` in the file map.
 **Why:** Treated a new dependency as a minor aside instead of a concrete implementation step.
@@ -115,8 +205,14 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Decisions Log
 
+### External links always open in new tab
+All external hrefs (`http://` / `https://`) must have `target="_blank" rel="noopener noreferrer"`. This applies to both hardcoded links in components and MDX-rendered content. Enforced via custom `MdxAnchor` component in `renderMDX`.
+
+### Lorenzo's GitHub handle is `lollo-santucci`
+Not `lorenzosantucci`. Use `https://github.com/lollo-santucci` everywhere. LinkedIn is `https://linkedin.com/in/lorenzosantucci` (confirmed correct).
+
 ### Metadata policy: static metadata vs generateMetadata by route type
-Static routes (home, about, contact, index pages) export `const metadata`. Dynamic routes (`[slug]` pages) export `generateMetadata()` that reads the entity for per-page title/description/canonical. Consistent convention avoids mixed patterns across the codebase.
+Pure index pages (projects, blog) export `const metadata`. Content-entity-backed pages (home, about, contact) and dynamic routes (`[slug]` pages) use `generateMetadata()` to read entity fields (title, description). Refined from original rule that all static routes use `const metadata` — entity-backed pages need dynamic metadata to pull from content system.
 
 ### Content loader: shared utility core with thin per-type wrappers
 Common logic (file discovery, validation, branded casting, sorting) lives in `src/lib/content/utils/`. Each content type module is a thin wrapper configuring the shared core with type-specific metadata (directory, required fields, sort comparator). Avoids duplicating logic across 5+ loader modules.

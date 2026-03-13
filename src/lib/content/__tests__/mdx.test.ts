@@ -38,7 +38,21 @@ describe('MDX rendering utility', () => {
     'renderMDX passes source string to MDXRemote for $label',
     ({ source }) => {
       renderMDX(source);
-      expect(MDXRemote).toHaveBeenCalledWith({ source });
+      expect(MDXRemote).toHaveBeenCalledWith(
+        expect.objectContaining({ source }),
+      );
     },
   );
+
+  it('passes custom components including anchor override to MDXRemote', () => {
+    renderMDX('test');
+    const call = vi.mocked(MDXRemote).mock.calls.at(-1)?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(call).toHaveProperty('components');
+    const comps = call.components as Record<string, unknown>;
+    expect(comps).toHaveProperty('a');
+    expect(typeof comps.a).toBe('function');
+  });
 });

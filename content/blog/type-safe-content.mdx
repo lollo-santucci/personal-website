@@ -1,0 +1,50 @@
+---
+title: "Type-Safe Content Is Just Good Infrastructure"
+slug: type-safe-content
+excerpt: How branded types, content loaders, and build-time validation turned a pile of markdown files into a content system I actually trust.
+date: "2025-05-18"
+categories:
+  - dev
+tags:
+  - typescript
+  - content-systems
+  - architecture
+---
+
+There's a moment in every project where you realize your content is held together by hope. You've got markdown files with frontmatter that might have the right fields, might have the right types, and definitely has that one file where someone wrote `date: tomorrow` and nobody caught it until production.
+
+I hit that moment building this site. The fix wasn't a CMS or a validation library — it was TypeScript, applied where it actually matters.
+
+## The Problem With Untyped Content
+
+Most static site generators treat content as a bag of strings. You write frontmatter, you access it with `data.title`, and if `title` doesn't exist, you get `undefined` at runtime. Maybe you notice during development. Maybe you don't.
+
+The real issue isn't missing fields — it's the false confidence. Your code compiles, your IDE shows no errors, and everything looks fine until a visitor hits a page where `date` is `null` and your formatting function throws. The type system was supposed to protect you, but it stopped at the boundary between code and content.
+
+## Branded Types: Trust, But Verify
+
+Plain `string` types are technically correct but semantically useless. A slug, an ISO date, and an asset path are all strings — but they're not interchangeable. Passing a date where a slug is expected is a bug, and TypeScript's structural typing won't catch it unless you give it something to work with.
+
+Branded types solve this. A `Slug` is a `string` with an invisible brand that prevents accidental assignment from a plain string. You can't write `const s: Slug = "hello"` — you need an explicit cast, which means the cast site is the only place where validation matters. Everything downstream can trust the type.
+
+The pattern is lightweight: `string & { readonly __brand: unique symbol }`. No runtime cost, no wrapper objects, just a compile-time constraint that makes wrong code look wrong.
+
+## Content Loaders as the Trust Boundary
+
+If branded types are the contract, content loaders are the enforcement. Each content type gets a loader function that reads files from disk, validates required fields, checks that slugs match filenames, and returns typed entities. If a file is missing its `title` or has a malformed `date`, the loader throws at build time — not at render time, not in production.
+
+The key insight is that validation happens once, at the boundary. After the loader returns a `BlogPost`, every consumer can trust the shape without re-checking. The page component doesn't need to handle missing fields. The card component doesn't need null guards on required props. The type system carries the guarantee forward.
+
+This also means adding content is pure configuration. Drop a new `.mdx` file with the right frontmatter, and the loader picks it up. No code changes, no new imports, no registration step. If the frontmatter is wrong, the build fails with a clear error message pointing at the exact file and field.
+
+## What This Actually Looks Like
+
+In practice, a content loader is surprisingly simple. Read all files from a directory, parse frontmatter, validate required fields exist, cast to the branded type, sort by the appropriate field, return the array. The whole thing is maybe 50 lines of actual logic, with the rest being type definitions.
+
+The interesting part is what you don't need: no schema library, no code generation, no build plugin. TypeScript's type system plus a thin validation layer at the file boundary gives you most of the guarantees that heavier tools provide — with the advantage that your content files are just files, readable and editable with any text editor.
+
+## The Payoff
+
+The real benefit isn't catching typos in frontmatter — though that's nice. It's the confidence to refactor. When every content access goes through a typed loader, you can rename a field, update the interface, and let the compiler tell you every place that needs to change. Try doing that with `data["title"]` scattered across twenty components.
+
+Type-safe content isn't glamorous infrastructure. It doesn't make for impressive demos or conference talks. But it's the kind of foundation that lets you move fast without the anxiety of wondering what's going to break next. And honestly, that's worth more than any fancy tooling.

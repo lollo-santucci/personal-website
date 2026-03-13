@@ -1,0 +1,49 @@
+---
+title: "Five Things Nobody Tells You About AI Engineering"
+slug: ai-engineering-lessons
+excerpt: Hard-won lessons from building ML systems that actually ship — from data pipelines that break at 3am to the art of prompt engineering under pressure.
+date: "2025-06-10"
+categories:
+  - ai
+  - engineering
+tags:
+  - machine-learning
+  - mlops
+  - lessons-learned
+---
+
+There's a gap between "I trained a model in a notebook" and "this thing runs in production and people depend on it." I've spent the last few years living in that gap, and it's taught me more than any course or tutorial ever did.
+
+Here are five lessons I keep coming back to.
+
+## 1. Your Data Pipeline Is the Product
+
+Everyone wants to talk about model architecture. Nobody wants to talk about the ETL job that silently dropped 12% of your training data because someone changed a column name upstream.
+
+The model is the glamorous part. The pipeline is the part that wakes you up at 3am. I've learned to spend at least as much time on data validation, schema enforcement, and monitoring as I do on the model itself. Tools like Great Expectations and simple row-count assertions have saved me more times than any hyperparameter sweep.
+
+## 2. Prompt Engineering Is Software Engineering
+
+When I started working with LLMs, I treated prompts like magic incantations — tweak a word here, add an example there, hope for the best. That approach scales about as well as you'd expect.
+
+Now I treat prompts like code: version-controlled, tested against regression suites, reviewed in PRs. System prompts get the same scrutiny as API contracts. The moment you start treating prompt design as an engineering discipline instead of an art form, your outputs get dramatically more reliable.
+
+## 3. Evaluation Is Harder Than Training
+
+Training a model that performs well on your test set is the easy part. Figuring out whether it actually works for your users is where things get interesting.
+
+Automated metrics only get you so far. For generative tasks, I've found that a combination of automated checks (format compliance, factual grounding against a knowledge base) and structured human evaluation gives the best signal. The key word is "structured" — ad hoc vibes-based testing is how you ship something that works great on your demo and falls apart on real inputs.
+
+## 4. The Best Model Is the One You Can Debug
+
+I've shipped systems where a simpler model with better observability outperformed a more sophisticated one that was essentially a black box. When something goes wrong in production — and it will — you need to understand why.
+
+This means logging inputs and outputs, tracking confidence scores, building dashboards that show drift over time, and having a clear rollback path. The fanciest architecture in the world is worthless if you can't figure out why it started hallucinating about medieval history when someone asked about pricing.
+
+## 5. Ship the Boring Version First
+
+It's tempting to reach for the most advanced approach immediately. Fine-tuned model with custom embeddings and a multi-agent orchestration layer? Sure, that sounds impressive in a design doc.
+
+But I've learned to start with the simplest thing that could work: a well-crafted prompt, a retrieval step over a small corpus, basic guardrails. Get it in front of users, collect real feedback, then iterate. Half the time, the boring version is good enough. The other half, the user feedback tells you exactly where to invest the complexity.
+
+The pattern is always the same: ship fast, measure honestly, improve deliberately. AI engineering isn't that different from regular engineering — it just has more ways to fail silently.

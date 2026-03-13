@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getProjects } from '@/lib/content';
+import ProjectCard from '@/components/ProjectCard';
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -12,19 +13,15 @@ export default async function ProjectsPage() {
   return (
     <article>
       <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-      <ul className="mt-6 space-y-6">
-        {projects.map((project) => (
-          <li key={project.slug}>
-            <a
-              href={`/projects/${project.slug}`}
-              className="text-lg font-semibold underline-offset-2 hover:underline"
-            >
-              {project.title}
-            </a>
-            <p className="mt-1 text-sm text-gray-600">{project.description}</p>
-          </li>
-        ))}
-      </ul>
+      {projects.length > 0 ? (
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {projects.map((project) => (
+            <ProjectCard key={project.slug} project={project} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-6 text-gray-500">No projects yet.</p>
+      )}
     </article>
   );
 }
