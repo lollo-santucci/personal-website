@@ -4,6 +4,12 @@ vi.mock('@/styles/globals.css', () => ({}));
 vi.mock('@/components/SkipToContent', () => ({ default: () => null }));
 vi.mock('@/components/Header', () => ({ default: () => null }));
 vi.mock('@/components/Footer', () => ({ default: () => null }));
+vi.mock('next/font/local', () => ({
+  default: () => ({ variable: '--mock-font', className: 'mock-font' }),
+}));
+vi.mock('next/font/google', () => ({
+  Manrope: () => ({ variable: '--mock-manrope', className: 'mock-manrope' }),
+}));
 
 import { metadata } from '@/app/layout';
 

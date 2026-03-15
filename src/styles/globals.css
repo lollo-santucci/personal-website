@@ -3,25 +3,104 @@
 @plugin "@tailwindcss/typography";
 
 /*
- * Base typography and global styles
- * Requirements: 9.1 (system font stack), 9.2 (prose styles), 9.3 (single light palette), 11.3 (focus indicators)
+ * Color tokens and layout spacing — single source of truth.
+ * Sync: src/lib/design-tokens.ts mirrors these values for programmatic consumers.
+ * Requirements: 1.1, 4.1, 4.3
  */
+:root {
+  /* Color palette */
+  --white: #fffdfa;
+  --black: #222222;
+  --accent: #fc5c46;
+  --violet: #b87dfe;
+  --blue: #467afc;
+  --lime: #cbfd00;
+  --green: #00cf00;
+  --muted: #9a9997;
 
+  /* Layout spacing (desktop reference values) */
+  --page-px: 100px;
+  --page-pt: 50px;
+  --section-gap: 60px;
+  --content-max-w: 1312px;
+  --collection-px: 40px;
+  --collection-py: 25px;
+  --card-gap: 25px;
+  --crosslink-gap: 50px;
+}
+
+/*
+ * Tailwind v4 theme tokens — maps CSS custom properties to named utilities.
+ * Components use: bg-primary, text-surface, font-pixbob-bold, border-standard, px-page-px, etc.
+ * Requirements: 1.2, 2.2, 4.1, 4.3, 4.5
+ */
+@theme {
+  /* Semantic colors */
+  --color-primary: var(--accent);
+  --color-secondary: var(--violet);
+  --color-surface: var(--white);
+  --color-text: var(--black);
+  --color-text-muted: var(--muted);
+  --color-border: var(--black);
+  --color-blue: var(--blue);
+  --color-lime: var(--lime);
+  --color-green: var(--green);
+
+  /* Font families */
+  --font-pixbob-bold: 'Pixbob Bold', monospace;
+  --font-pixbob-regular: 'Pixbob Regular', monospace;
+  --font-pixbob-lite: 'Pixbob Lite', monospace;
+  --font-manrope: 'Manrope', sans-serif;
+
+  /* Border widths */
+  --border-standard: 3px;
+  --border-collection: 10px;
+  --border-frame: 5px;
+
+  /* Spacing */
+  --spacing-page-px: 100px;
+  --spacing-page-pt: 50px;
+  --spacing-section-gap: 60px;
+  --spacing-collection-px: 40px;
+  --spacing-collection-py: 25px;
+  --spacing-card-gap: 25px;
+  --spacing-crosslink-gap: 50px;
+
+  /* Container widths */
+  --width-content-max: 1312px;
+}
+
+/*
+ * Global base styles and resets.
+ * Requirements: 1.3 (body), 1.4 (selection), 1.5 (focus), 1.6 (border-radius), 1.7 (smooth scroll), 1.8 (pixel-art)
+ */
 @layer base {
-  body {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
-      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-      'Noto Color Emoji';
-    font-size: 1rem; /* 16px */
-    line-height: 1.625; /* between 1.5–1.75 */
-    color: #1a1a1a;
-    background-color: #ffffff;
+  html {
+    scroll-behavior: smooth;
   }
 
-  /* Visible focus indicator for all interactive elements (R11.3) */
-  :focus-visible {
-    outline: 2px solid #2563eb;
+  body {
+    background: var(--white);
+    color: var(--black);
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: white;
+  }
+
+  *:focus-visible {
+    outline: 3px solid var(--accent);
     outline-offset: 2px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    border-radius: 0;
+  }
+
+  .pixel-art {
+    image-rendering: pixelated;
   }
 }

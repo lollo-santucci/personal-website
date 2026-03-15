@@ -40,7 +40,7 @@ Agents are defined in `content/agents/{slug}.yaml`. Template: `content/agents/_t
 |---|---|---|
 | `greeting` | string | Chat placeholder message on profile page |
 | `world` | object | Play view presence: `location`, `sprite`, `position`, `dialogueId` |
-| `software` | object | Chat config: `availability`, `model`, `systemPrompt`, `tools` |
+| `software` | object | Chat config: `availability`, `model`, `systemPrompt`, `context`, `examples`, `tools` |
 
 ## Asset Convention
 
@@ -81,12 +81,109 @@ Agents in the world are stationary NPCs with:
 - Dialogue on interaction (reflects personality and role)
 - Dialogue actions: `open_agent_profile`, `start_chat`, `open_project`, `open_page`, etc.
 
-## Chat
+## Chat — Software Architecture
 
-- Chat is the operational layer where software capabilities are exposed
-- Agent maintains personality in chat (same tone as profile and world dialogue)
-- Accessible from: agentdex profile page, office world interaction
-- Chat implementation is Phase 8 (Agent Platform) — until then, profile shows a visual placeholder with greeting message
+### Overview
+
+Each agent is a **monoprompt chatbot**: one system prompt (generated from YAML fields) + one Vercel AI SDK chat stream. No RAG, no multi-agent orchestration, no persistent memory.
+
+Chat is a **classic view feature first**. It ships with the agentdex profile page (`/agentdex/[slug]`), before the play view exists. When the play view is built later, world interactions trigger `start_chat` which opens the same chat interface.
+
+### API route
+
+```
+POST /api/chat/[slug]
+```
+- Reads `content/agents/{slug}.yaml`
+- Composes system prompt from YAML fields (see below)
+- Streams response via Vercel AI SDK `streamText()` + Anthropic provider
+- Frontend: `useChat({ api: '/api/chat/${agent.slug}' })`
+
+### System prompt generation
+
+The system prompt is **generated at runtime from YAML fields**, not written manually:
+
+```
+You are {name}. {role}.
+
+## Personality
+{personality}
+
+## Mission
+{mission}
+
+## Tone of Voice
+Warm: {warm}/5 | Direct: {direct}/5 | Playful: {playful}/5
+Formal: {formal}/5 | Calm: {calm}/5
+
+## You are best for
+{bestFor joined}
+
+## Capabilities
+{capabilities joined}
+
+## Rules
+- Stay in character at all times
+- You work for Lorenzo Santucci's website
+- If asked something outside your capabilities, redirect warmly
+- Keep responses concise
+```
+
+### Enriching prompts
+
+Beyond the generated base, agents can have richer context:
+
+- **`software.systemPrompt`** (string): manual override/additions appended to the generated prompt. For agent-specific instructions that don't fit structured fields.
+- **`software.context`** (string[], slugs): list of content entity slugs the agent "knows". Resolved at runtime via two-level context (see below).
+- **`software.examples`** (array of {user, assistant}): few-shot examples that define tone and response style. Injected as conversation history before the user's first message.
+- **Site-wide context**: a build-time summary of all projects, blog posts, and Lorenzo's info can be injected into every agent's prompt, so they all know the basics.
+
+### Two-level context strategy
+
+Agents that need knowledge of many content items (e.g., the edicola agent knowing all blog articles) use a **two-level approach** to stay fast and cost-effective:
+
+1. **Summaries always in prompt** (~40 tokens per item): a lightweight manifest of all content the agent knows — slug, title, one-line description, tags. Even with 50 articles this is ~2000 tokens. The model can answer "what articles do you have about X?" from summaries alone.
+
+2. **`get_content(slug)` tool for on-demand detail**: when the user asks about a specific item, the model calls a tool to retrieve the full content. This keeps the base prompt small and only loads heavy content when needed.
+
+```typescript
+// Built with Vercel AI SDK tool() — ~15 lines
+const getContent = tool({
+  description: 'Get full content of an item by type and slug',
+  parameters: z.object({
+    type: z.enum(['blog-posts', 'projects', 'services']),
+    slug: z.string(),
+  }),
+  execute: async ({ type, slug }) => {
+    return await loadContent(type, slug);
+  },
+});
+```
+
+The `software.context` field in YAML lists the slugs. At runtime:
+- Summaries for all listed slugs are injected into the system prompt
+- The `get_content` tool is registered so the model can fetch full content on demand
+- If `context` is `["*"]` (wildcard), all items of the relevant content type are summarized
+
+**Tools are built by us** using Vercel AI SDK's `tool()` function — a Zod schema for parameters + an `execute` function that reads from the content system. The model decides autonomously when to call the tool. No external tool infrastructure needed.
+
+### Cost controls
+
+| Control | Implementation |
+|---|---|
+| **Model per agent** | `software.model` field — Haiku for simple agents, Sonnet for key ones |
+| **Max tokens/response** | `maxTokens` param in `streamText()` (e.g., 500-1000) |
+| **Max messages/conversation** | Client-side counter — after N messages, show "Contact Lorenzo directly" |
+| **Max conversations/IP/day** | Rate limiting middleware on `/api/chat/[slug]` |
+| **Max tokens/conversation** | Server-side token counter — close chat at limit |
+| **Global kill switch** | Env var `AGENTS_CHAT_ENABLED=true\|false` — disables all chat, shows placeholder |
+| **Budget alerts** | Anthropic API usage tracking — external monitoring |
+
+### Access points
+
+- **Agentdex profile** (`/agentdex/[slug]`): primary chat interface, always available
+- **Play view world**: `start_chat` dialogue action opens the same chat UI as an overlay
+- **No standalone chat page** — chat lives within the agent's context (profile or world)
 
 ## Key Rules
 
@@ -95,5 +192,7 @@ Agents in the world are stationary NPCs with:
 - **One definition, multiple views** — never duplicate agent data across views
 - **Slug is king** — all cross-references (content ↔ assets ↔ routes) use the slug
 - **Config over code** — new agent = new YAML + new sprite folder, zero code changes
+- **Classic view first** — chat ships with agentdex before play view exists
+- **Cost-aware** — every agent has a model tier, every chat has limits
 
 → Full doc: `context/docs/characters.md` (triple nature details, design notes)

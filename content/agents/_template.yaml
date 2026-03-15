@@ -28,7 +28,12 @@ world: # OPTIONAL — object (world presence in play view)
   dialogueId: "agent-slug-intro" # OPTIONAL — DialogueId (dialogue identifier)
 software: # OPTIONAL — object (agent platform config)
   availability: "available" # REQUIRED (if software) — enum: "available" | "disabled" | "coming-soon"
-  model: "claude-sonnet-4-6" # OPTIONAL — string (AI model identifier)
-  systemPrompt: "You are..." # OPTIONAL — string (system prompt for the agent)
+  model: "claude-sonnet-4-6" # OPTIONAL — string (AI model identifier, controls cost tier)
+  systemPrompt: "Additional instructions..." # OPTIONAL — string (appended to auto-generated prompt)
+  context: # OPTIONAL — string[] (content slugs the agent "knows" — resolved at runtime)
+    - "project-slug"
+  examples: # OPTIONAL — array of few-shot examples to define response style
+    - user: "Can you help me with my project?"
+      assistant: "Sure! Tell me about your timeline and budget."
   tools: # OPTIONAL — string[]
     - "tool-name"

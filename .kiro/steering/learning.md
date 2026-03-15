@@ -15,6 +15,41 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### Namespace import (`import * as`) does NOT break Turbopack static tracing
+**What went wrong:** Tried switching `import { readFile } from 'node:fs/promises'` to `import * as fsPromises` to prevent Turbopack from tracing dynamic `readFile` calls. Warnings persisted — Turbopack traces through namespace imports too.
+**Why:** Assumed namespace imports would be opaque to Turbopack's static analysis. They aren't.
+**Correct approach:** Turbopack's overly broad file pattern warnings for dynamic `fs.readFile` paths are a known limitation. The warnings are cosmetic (build succeeds). Revert the unnecessary change and accept the warnings until Turbopack provides a suppression mechanism or the content loader is refactored to use static paths.
+
+### strReplace dropped adjacent line when replacement boundary was too narrow
+**What went wrong:** A `strReplace` targeting `readFile(filePath, 'utf-8');\n    const fileSlug = ...` replaced both lines but the new text only included the `readFile` line, silently dropping `const fileSlug = basename(filename, ext)`.
+**Why:** The `oldStr` boundary included the next line but `newStr` didn't reproduce it.
+**Correct approach:** When using strReplace, always verify that `newStr` preserves all lines from `oldStr` that should survive. Read the file after replacement to confirm.
+
+### Adding new imports to layout.tsx breaks existing layout tests
+**What went wrong:** Task 1.3 added `next/font/local` and `next/font/google` imports to `layout.tsx`. The existing `layout.test.tsx` didn't mock these modules, causing test failures caught only at the final checkpoint.
+**Why:** The task focused on the implementation file without checking for existing tests that import it.
+**Correct approach:** When modifying a file that has existing tests, check and update those tests in the same subtask — don't defer to a checkpoint. Grep for the file's import path across `src/__tests__/`.
+
+### Design doc: Blockquote contrast ratio stated as 4.5:1 without verification
+**What went wrong:** Design doc claimed white (#fffdfa) on violet (#b87dfe) met 4.5:1 contrast. Actual ratio is ~3.2:1, which only meets WCAG AA for large text (3:1 threshold). Requirements R13 AC2 also specified 4.5:1 incorrectly.
+**Why:** Contrast ratio was asserted without computing it. The subagent generated the claim and it wasn't verified.
+**Correct approach:** Always compute contrast ratios before claiming compliance. When the design contradicts requirements, update requirements to match reality (per existing learning). State the actual ratio and the WCAG threshold it meets.
+
+### Design doc: hardcoded pixel values in Tailwind classes contradicted "zero hardcoded pixels" property
+**What went wrong:** Design doc used `border-[10px]`, `max-w-[1312px]`, `xl:px-[100px]` etc. while Property 1 and Requirements 1.9/4.4 claimed zero hardcoded pixel values in component markup.
+**Why:** Tokens were defined as CSS custom properties but not registered in `@theme`, so components had to use arbitrary value syntax instead of named utilities.
+**Correct approach:** Register all design tokens in `@theme` so components use named utilities (`border-collection`, `max-w-content-max`, `px-page-px`). Document explicitly which values use arbitrary syntax (xl typography, mobile border override) and why, with permitted exceptions in the correctness property.
+
+### Requirements doc: adoption points leaked into foundation component specs
+**What went wrong:** After first round of fixes, component requirements still listed specific pages where they'd be used (e.g., "RPG Selector used in landing, agentdex, blog", "CTA Banner on every inner page"). Also: ambiguous ACs survived ("visible focus indicator", "descriptive alt text"), and some ACs still described mechanism ("expose as CSS variable", "configure Tailwind typography plugin"). Omnibus R16 mixed build/responsive/accessibility.
+**Why:** Didn't fully separate component contract definition from component adoption. Vague criteria and mechanism language survived the first pass.
+**Correct approach:** Foundation specs define component contracts (props, visual behavior, accessibility). Adoption points (which pages use which components) belong in the application spec. Quantify all ACs (e.g., "3px solid var(--accent) with 2px offset" not "visible focus indicator"). Split omnibus requirements into focused single-concern requirements.
+
+### Requirements doc: implementation details, duplications, vague criteria, over-scoping
+**What went wrong:** Design system foundations requirements doc had: (1) implementation details in ACs (`next/font/local`, `@theme directive`, "build process SHALL treat as violation"), (2) duplications across R1/R4/R17/R19/R20, (3) vague criteria ("no layout shift", "visually appropriate", "inviting"), (4) page-level redesigns (ProjectCard, blog/agent list) that belong in the application spec, not foundations.
+**Why:** Subagent generated requirements too close to the spec prompt's implementation-heavy language without filtering for requirements-level abstraction.
+**Correct approach:** Strip implementation mechanism from ACs (state what, not how). Merge overlapping requirements. Replace vague criteria with measurable checks (e.g., "no FOIT" instead of "no layout shift", contrast ratio instead of "readable"). Keep foundation specs to tokens + base components; page-level redesigns go in the application spec.
+
 ### Subagent file deletion not verified on disk
 **What went wrong:** Subagent reported deleting `src/__tests__/app/office/` during Task 1.3, but Lorenzo showed the files still existed on disk via `ls`. The workspace tree didn't show them, masking the issue.
 **Why:** Trusted the subagent's success report and the workspace tree without verifying via `executeBash` that files were actually removed from the filesystem.
@@ -80,7 +115,7 @@ This file tracks mistakes, corrections, and decisions made during development. *
 **What went wrong:** `toEqualTypeOf<Slug | undefined>()` passed in Vitest but failed under `tsc --noEmit`.
 **Correct approach:** Use `.not.toEqualTypeOf<Slug>()` to avoid the branded-type-plus-undefined constraint issue.
 
-### [Consolidated] Design doc authoring lessons (from site-shell, core-content-pages, agentdex-shell specs)
+### [Consolidated] Design doc authoring lessons (from site-shell, core-content-pages, agentdex-shell, design-system-foundations specs)
 - **File placement**: check existing project structure before proposing new file locations. Content-related utilities go under `src/lib/content/`, not `src/lib/`.
 - **Locale choices**: use `undefined` (runtime default) or explicitly motivate the locale. Don't default to `'en'` in a multilingual context.
 - **Implementation notes**: design docs state strategy and fallbacks. Operational testing instructions belong in tasks.
@@ -95,11 +130,25 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - **File map**: every design doc needs a File Map section listing every file created or modified.
 - **External contracts**: when design uses an external function in multiple places, document its contract inline.
 - **Design-requirements alignment**: never contradict requirements — either update requirements or conform the design.
+- **Contrast ratios**: always compute actual contrast ratios before claiming compliance. State the actual ratio and the specific WCAG threshold it meets (normal text 4.5:1 vs large text 3:1).
+- **Token-utility alignment**: when a design doc claims "no hardcoded values", ensure all referenced values are actually registered as named theme tokens. Document permitted exceptions explicitly.
+- **Semantic ambiguity**: close open semantic decisions (e.g., "heading or span") with a concrete prop API in the design doc. Don't leave implementation-time choices for presentational components.
+- **Overflow/truncation**: for constrained-width components (flex rows, collection items), specify overflow handling, truncation strategy, and shrink behavior — not just layout direction and alignment.
 
-### [Consolidated] Requirements doc authoring lessons (from site-shell, core-content-pages, agentdex-shell specs)
+### [Consolidated] Requirements doc authoring lessons (from site-shell, core-content-pages, agentdex-shell, design-system-foundations specs)
 - **No implementation names**: requirements describe behaviors, not component names, function names, or library names.
 - **No design-forward phrasing**: don't steer the design from within ACs ("The design SHALL specify..."). State the behavioral outcome only.
+- **No implementation mechanism in ACs**: don't specify `next/font/local`, `@theme directive`, or specific build tooling. State the outcome ("fonts load without FOIT"), not the mechanism.
 - **Implementation-specific CSS**: state the behavioral need ("consistent dimensions regardless of aspect ratio"), not the CSS technique.
+- **Vague criteria must be measurable**: replace "no layout shift" with "no FOIT", "visually appropriate" with specific ranges, "inviting" with nothing. If you can't test it, don't write it as an AC.
+- **Merge overlapping requirements**: if multiple requirements cover the same concern (e.g., colors in R1 + global styles in R17 + responsive in R19), merge them. Each concern has exactly one owner requirement.
+- **Foundation vs application scope**: token/component specs cover definitions only. Page-level redesigns and component migrations belong in the application spec.
+- **No adoption points in foundation specs**: component requirements define the contract (props, visual behavior, accessibility). Where components are used on specific pages belongs in the application spec, not the foundation spec.
+- **Quantify all ACs**: replace "visible focus indicator" with "3px solid var(--accent) with 2px offset", "descriptive alt text" with "non-empty alt string", "consistent gap" with "8–12px gap". If you can't measure it, don't write it as an AC.
+- **Single-concern requirements**: don't create omnibus requirements mixing build integrity + responsiveness + accessibility. Split into focused requirements so each can be verified independently.
+- **Centralize cross-cutting specs as glossary terms**: when the same visual/behavioral spec (e.g., focus outline) appears in multiple component requirements, define it once as a glossary term with a single AC, then have components "inherit" it by reference. Avoids repetition and inconsistency risk.
+- **Compositional component contracts**: for container/wrapper components (e.g., Collection_Row), specify the slot API (children, action slot), alignment, and responsive behavior — not just "flex row with two areas". Match the specificity level of other components in the same spec.
+- **No editorial notes in ACs**: "NOTE: the design doc SHALL..." is meta-commentary, not a normative criterion. Rewrite as a proper AC: "THE system SHALL define a documented strategy for X."
 - **AC numbering**: after inserting or reordering ACs, re-read the full requirement to verify sequential numbering.
 - **Ambiguous content sources**: define specific entity sources and fallback behavior, don't say "loaded from Content_System" without specifying which entity.
 - **Seed content minimums**: set minimums to match the maximum display count of any consuming page.
@@ -130,6 +179,21 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - `js-yaml` is now installed as a production dependency (content-loader spec).
 
 ## Decisions Log
+
+### Tailwind v4 token registration strategy: named utilities vs arbitrary values
+Colors, font families, border widths, spacing, and container widths are registered via `@theme` and produce named Tailwind utilities. Typography sizes at xl breakpoint use arbitrary values (`xl:text-[128px]`) because they're one-off Figma sizes. Collection container mobile border (`border-[6px]`) is the only other arbitrary pixel value.
+
+### SectionLabel semantic control via `as` prop
+SectionLabel accepts `as?: 'h2' | 'h3' | 'h4' | 'span'` (defaults to `'span'`). Visual styling is identical regardless of `as` value — the prop controls rendered HTML element only. Callers choose heading level based on context.
+
+### Blockquote contrast: 3:1 large text threshold, not 4.5:1
+White (#fffdfa) on violet (#b87dfe) yields ~3.2:1 contrast. Meets WCAG AA for large text (≥3:1) only. Blockquote text must remain ≥24px at all breakpoints to satisfy this threshold.
+
+### StatBar clamping over strict typing
+StatBar accepts `value: number` and clamps to 1–5 rather than strict union type. Content loader doesn't validate numeric ranges; clamping ensures reasonable rendering. Seed validation tests catch invalid data.
+
+### Design system spec scoping: foundations vs application
+Spec 08 (design-system-foundations) covers tokens (colors, typography, spacing, borders) and base UI components only. Page-level redesigns (ProjectCard offset shadow, blog/agent list migration to collection rows, StatusBadge deprecation) are deferred to Spec 09 (design system application).
 
 ### Entity detail page meta descriptions: readable sentences, not raw field values
 Meta descriptions for entity detail pages should be formatted as readable sentences, not just the raw field value. Exact sentence format is a design decision per spec, but the floor is: more descriptive than the raw value alone.
