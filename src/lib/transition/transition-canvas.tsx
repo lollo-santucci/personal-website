@@ -163,7 +163,16 @@ export default function TransitionCanvas({
     canvas.style.height = `${window.innerHeight}px`;
 
     const ctx = canvas.getContext('2d');
-    if (ctx) ctx.scale(dpr, dpr);
+    if (ctx) {
+      ctx.scale(dpr, dpr);
+
+      // When revealing, fill canvas immediately so there's no flash between
+      // the cover phase ending and the first reveal frame drawing.
+      if (phase === 'revealing') {
+        ctx.fillStyle = config.fillColor;
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
 
     // Reset state for new animation
     startTimeRef.current = 0;

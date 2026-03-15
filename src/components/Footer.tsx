@@ -31,7 +31,7 @@ export default function Footer() {
               <img
                 src="/icons/linkedin-icon-pixel.svg"
                 alt=""
-                className="pixel-art size-6"
+                className="pixel-art size-6 transition-transform duration-200 hover:scale-125"
                 aria-hidden="true"
               />
             </a>
@@ -47,7 +47,7 @@ export default function Footer() {
                 alt=""
                 width={25}
                 height={25}
-                className="pixel-art"
+                className="pixel-art transition-transform duration-200 hover:scale-125"
                 aria-hidden="true"
               />
             </a>

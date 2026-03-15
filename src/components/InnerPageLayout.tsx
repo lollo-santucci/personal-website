@@ -9,6 +9,10 @@ interface InnerPageLayoutProps {
   ctaBody: string;
   crossLinkSections: [CrossLinkSection, CrossLinkSection];
   children: React.ReactNode;
+  /** Rendered above the title (e.g. breadcrumb). */
+  beforeTitle?: React.ReactNode;
+  /** Full-width content rendered between children and CTA (no max-width constraint). */
+  afterContent?: React.ReactNode;
 }
 
 export default function InnerPageLayout({
@@ -17,23 +21,30 @@ export default function InnerPageLayout({
   ctaBody,
   crossLinkSections,
   children,
+  beforeTitle,
+  afterContent,
 }: InnerPageLayoutProps) {
   return (
     <div className="flex flex-col gap-8 md:gap-12 xl:gap-section-gap">
       <Header />
 
       <div className="px-6 md:px-12 xl:px-page-px">
-        <h1 className="mx-auto max-w-content-max font-pixbob-bold text-4xl md:text-5xl xl:text-[128px]">
-          {title}
-        </h1>
+        <div className="mx-auto max-w-content-max">
+          {beforeTitle}
+          <h1 className="font-pixbob-bold text-4xl md:text-5xl xl:text-[128px]">
+            {title}
+          </h1>
+        </div>
       </div>
 
       <div className="px-6 md:px-12 xl:px-page-px">
         <div className="mx-auto max-w-content-max">{children}</div>
       </div>
 
+      {afterContent}
+
       <div className="px-6 md:px-12 xl:px-page-px">
-        <div className="mx-auto max-w-content-max">
+        <div className="mx-auto max-w-content-max xl:px-[100px]">
           <CTABanner headline={ctaHeadline} body={ctaBody} href="/contact" />
         </div>
       </div>

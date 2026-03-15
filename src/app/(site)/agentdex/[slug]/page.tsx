@@ -109,11 +109,13 @@ export default async function AgentProfilePage({
       ctaHeadline="Want to build an Agent?"
       ctaBody="Hire me!"
       crossLinkSections={crossLinkSections}
+      beforeTitle={
+        <Breadcrumb
+          items={[{ label: 'Agentdex', href: '/agentdex' }]}
+          current={agent.name}
+        />
+      }
     >
-      <Breadcrumb
-        items={[{ label: 'Agentdex', href: '/agentdex' }]}
-        current={agent.name}
-      />
 
       <span className="mt-2 block font-pixbob-regular text-2xl md:text-3xl text-text-muted opacity-60">
         #{formatAgentIndex(agent.index)}

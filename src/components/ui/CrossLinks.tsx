@@ -30,23 +30,23 @@ export default function CrossLinks({ sections, className }: CrossLinksProps) {
         .join(' ')}
     >
       {sections.map((section) => (
-        <div key={section.href}>
+        <div key={section.href} className="flex flex-col gap-6 md:gap-8 xl:gap-10">
           <TransitionLink
             href={section.href}
-            className="inline-flex items-center gap-2 font-pixbob-bold text-xl md:text-2xl xl:text-[48px] mb-4 md:mb-6"
+            className="group inline-flex items-center gap-2.5 font-pixbob-bold text-xl md:text-2xl xl:text-[48px]"
           >
             {section.title}
-            <ArrowUpRight className="size-[1em]" />
+            <ArrowUpRight className="size-4 md:size-5 xl:size-6" />
           </TransitionLink>
-          <div className="flex flex-col gap-3 md:gap-4">
+          <div className="flex flex-wrap gap-4 md:gap-6 xl:gap-10 ">
             {section.items.map((item) => (
               <TransitionLink
                 key={item.href}
                 href={item.href}
-                className="inline-flex items-center justify-between gap-2 border-standard border-black bg-surface font-pixbob-regular text-lg md:text-xl xl:text-[36px] px-4 py-2 md:px-5 md:py-3"
+                className="group inline-flex items-center gap-2.5 border-standard border-black bg-surface font-pixbob-regular text-lg md:text-xl xl:text-[36px] px-4 py-2 md:px-5 md:py-3 xl:px-[25px] xl:py-4 outline outline-3 outline-text"
               >
                 {item.label}
-                <ArrowUpRight className="size-[1em] flex-shrink-0" />
+                <ArrowUpRight className="size-4 md:size-5 xl:size-6 flex-shrink-0" />
               </TransitionLink>
             ))}
           </div>

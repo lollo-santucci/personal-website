@@ -18,7 +18,7 @@ export const badgeVariantClasses: Record<BadgeVariant, string> = {
 };
 
 export const badgeBaseClasses =
-  'inline-flex items-center border-standard border-black font-pixbob-regular text-sm md:text-base xl:text-[22px] px-2 py-0.5 md:px-3 md:py-1';
+  'inline-flex self-start items-center border-standard border-black outline outline-3 outline-text font-pixbob-regular text-sm md:text-lg xl:text-[32px] leading-[32px] px-2 py-0.5 md:px-3 md:py-1.5 xl:px-3 xl:py-1.5';
 
 export default function Badge({ variant, children, className }: BadgeProps) {
   const classes = [badgeBaseClasses, badgeVariantClasses[variant], className]

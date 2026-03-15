@@ -74,13 +74,19 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   // Watch pathname changes to transition from waiting → revealing
   useEffect(() => {
     if (phase === 'waiting' && pendingHrefRef.current) {
-      // Pathname changed — start reveal
-      setPhase('revealing');
       pendingHrefRef.current = null;
       if (waitingTimeoutRef.current) {
         clearTimeout(waitingTimeoutRef.current);
         waitingTimeoutRef.current = null;
       }
+
+      // Wait a few frames so React can fully render the new page
+      // before uncovering it — prevents a visible content snap.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setPhase('revealing');
+        });
+      });
     }
   }, [pathname, phase]);
 

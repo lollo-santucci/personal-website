@@ -85,11 +85,13 @@ export default async function ProjectDetailPage({
       ctaHeadline="Have a project in mind?"
       ctaBody="Let's talk about how to turn it into something clear, useful and well built."
       crossLinkSections={crossLinkSections}
+      beforeTitle={
+        <Breadcrumb
+          items={[{ label: 'Projects', href: '/projects' }]}
+          current={project.title}
+        />
+      }
     >
-      <Breadcrumb
-        items={[{ label: 'Projects', href: '/projects' }]}
-        current={project.title}
-      />
 
       {/* Hero area: screenshot with border frame + tech badges */}
       {project.image && (

@@ -58,7 +58,7 @@
   --border-frame: 5px;
 
   /* Spacing */
-  --spacing-page-px: 100px;
+  --spacing-page-px: 200px;
   --spacing-page-pt: 50px;
   --spacing-section-gap: 60px;
   --spacing-collection-px: 40px;
@@ -121,6 +121,7 @@
       -webkit-text-stroke-width: 20px;
     }
   }
+
 }
 
 @keyframes menu-pulse {
@@ -136,9 +137,25 @@
   animation: menu-pulse 1s ease-in-out infinite;
 }
 
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee 60s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-menu-pulse {
     animation: none;
     opacity: 0.6;
+  }
+  .animate-marquee {
+    animation: none;
   }
 }

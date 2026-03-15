@@ -1,4 +1,7 @@
+'use client';
+
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
+import TransitionLink from '@/components/TransitionLink';
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
 
 type ButtonVariant = 'primary' | 'secondary' | 'dark';
@@ -50,7 +53,7 @@ export default function Button(props: ButtonProps) {
   } = props;
 
   const classes = [
-    'group inline-flex items-center gap-2 border-standard border-black font-pixbob-regular transition-colors duration-200 motion-reduce:transition-none',
+    'group inline-flex items-center gap-2 border-standard border-black outline outline-3 outline-text font-pixbob-regular transition-colors duration-200 motion-reduce:transition-none',
     variantClasses[variant],
     sizeClasses[size],
     className,
@@ -62,10 +65,10 @@ export default function Button(props: ButtonProps) {
 
   if (href) {
     return (
-      <a href={href} className={classes} {...(rest as Omit<ComponentPropsWithoutRef<'a'>, 'href' | 'className'>)}>
+      <TransitionLink href={href} className={classes} {...(rest as Omit<ComponentPropsWithoutRef<'a'>, 'href' | 'className'>)}>
         {children}
         {iconElement}
-      </a>
+      </TransitionLink>
     );
   }
 

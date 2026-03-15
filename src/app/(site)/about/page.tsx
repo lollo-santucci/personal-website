@@ -10,8 +10,12 @@ import InnerPageLayout from '@/components/InnerPageLayout';
 import Prose from '@/components/ui/Prose';
 import SectionLabel from '@/components/ui/SectionLabel';
 import StatBar, { StatBarGroup } from '@/components/ui/StatBar';
-import RPGSelector from '@/components/ui/RPGSelector';
 import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import ArrowUpRight from '@/components/ui/ArrowUpRight';
+import CharacterSprite from '@/components/CharacterSprite';
+import LogoMarquee from '@/components/ui/LogoMarquee';
+import TransitionLink from '@/components/TransitionLink';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,37 +28,27 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/**
- * Character sprite crop from agent spritesheet.
- * Front-facing idle = column 3, row 0. Frame size: 32×64 (2 tiles tall).
- * Rendered as CSS background-position crop at 4× scale with pixelated rendering.
- */
-function AgentSprite({ slug, name }: { slug: string; name: string }) {
-  const frameW = 32;
-  const frameH = 64;
-  const scale = 4;
-  const col = 3;
-  const row = 0;
-  const displayW = frameW * scale;
-  const displayH = frameH * scale;
+// Lorenzo spritesheet: 1792×1312, 32×64 frames
+const LORENZO_SPRITE_CONFIG = {
+  slug: 'lorenzo-santucci',
+  sheetWidth: 1792,
+  sheetHeight: 1312,
+  idleCol: 3,
+  idleRow: 0,
+  scale: 6,
+  animations: [
+    { row: 7, startCol: 0, frames: 11 },  // read book
+    { row: 4, startCol: 0, frames: 6 },  // walk up
+    { row: 6, startCol: 0, frames: 6 },  // walk right
+  ],
+} as const;
 
-  return (
-    <div
-      role="img"
-      aria-label={`${name} character sprite`}
-      className="pixel-art mx-auto"
-      style={{
-        width: displayW,
-        height: displayH,
-        backgroundImage: `url(/assets/agents/${slug}/spritesheets/character_spritesheet.png)`,
-        backgroundPosition: `-${col * displayW}px -${row * displayH}px`,
-        backgroundSize: 'auto',
-        backgroundRepeat: 'no-repeat',
-        imageRendering: 'pixelated',
-      }}
-    />
-  );
-}
+const TRUSTED_BY_LOGOS = [
+  { src: '/assets/logos/logo-indigo.svg', alt: 'indigo.ai', href: 'https://indigo.ai', height: 28, className: 'h-7 md:h-18' },
+  { src: '/assets/logos/logo-openeconomics.svg', alt: 'OpenEconomics', href: 'https://openeconomics.eu', height: 28, className: 'h-7 md:h-18' },
+  { src: '/assets/logos/logo-romatropicale.svg', alt: 'Roma Tropicale', href: 'https://romatropicale.com', height: 80, className: 'h-16 md:h-28' },
+  { src: '/assets/logos/logo-odda.svg', alt: 'Odda', href: 'https://www.oddastudio.com/', height: 28, className: 'h-7 md:h-18' },
+] as const;
 
 export default async function AboutPage() {
   const [page, agent, blogPosts, projects] = await Promise.all([
@@ -64,7 +58,7 @@ export default async function AboutPage() {
     getProjects(),
   ]);
 
-  const title = page?.title ?? 'About';
+  const title = page?.title ?? 'About me';
 
   let mdxContent: React.ReactNode = null;
   if (page) {
@@ -101,10 +95,22 @@ export default async function AboutPage() {
       ctaHeadline="Have a project in mind?"
       ctaBody="Let's talk about how to turn it into something clear, useful and well built."
       crossLinkSections={crossLinkSections}
+      afterContent={
+        <div>
+          <div className="px-6 md:px-12 xl:px-page-px">
+            <div className="mx-auto max-w-content-max">
+              <h2 className="font-pixbob-bold text-2xl md:text-3xl xl:text-[48px]">Trusted by</h2>
+            </div>
+          </div>
+          <div className="mt-12">
+            <LogoMarquee logos={TRUSTED_BY_LOGOS} />
+          </div>
+        </div>
+      }
     >
-      <div className="flex flex-col gap-8 lg:flex-row lg:gap-12 xl:gap-16">
+      <div className="flex flex-col gap-8 lg:flex-row xl:gap-[25px]">
         {/* Left column: prose content */}
-        <div className="lg:flex-1">
+        <div className="lg:flex-[50] lg:min-w-0">
           {mdxContent ? (
             <Prose>{mdxContent}</Prose>
           ) : (
@@ -113,69 +119,115 @@ export default async function AboutPage() {
         </div>
 
         {/* Right column: agentdex-style profile sidebar */}
-        <aside className="flex flex-col gap-6 lg:w-80 xl:w-96 lg:shrink-0">
+        <aside className="flex flex-col gap-6 xl:gap-[25px] lg:flex-[50] lg:min-w-0 md:px-20">
           {agent && (
             <>
-              {/* Character sprite */}
-              <AgentSprite slug={String(agent.slug)} name={agent.name} />
-
-              {/* Role */}
-              <div>
-                <SectionLabel variant="dark" as="h2">role</SectionLabel>
-                <p className="mt-2 flex items-start gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
-                  <RPGSelector className="shrink-0" />
-                  <span>{agent.role}</span>
-                </p>
+              {/* Header row: agentdex badge (with arrow icon) + ID label */}
+              <div className="flex items-center justify-center gap-4 xl:gap-[10px]">
+                <TransitionLink href="/agentdex" className="group">
+                  <Badge variant="accent">
+                    agentdex
+                    <ArrowUpRight className="ml-1 size-2.5 xl:size-[10px]" />
+                  </Badge>
+                </TransitionLink>
+                <span className="border-standard border-black outline outline-3 outline-text bg-surface px-3 py-1.5 font-pixbob-regular text-lg md:text-2xl xl:text-[40px] leading-[32px]">
+                  001 - {agent.name}
+                </span>
               </div>
 
-              {/* Best for */}
-              <div>
-                <SectionLabel variant="dark" as="h2">best for</SectionLabel>
-                <ul className="mt-2 flex flex-col gap-1">
-                  {agent.bestFor.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]"
-                    >
-                      <RPGSelector className="shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+              {/* Sprite + Role/BestFor side by side */}
+              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between xl:px-15">
+                {/* Animated character sprite */}
+                <div className="shrink-0">
+                  <CharacterSprite
+                    name={agent.name}
+                    {...LORENZO_SPRITE_CONFIG}
+                  />
+                </div>
+
+                {/* Role + Best for */}
+                <div className="flex flex-col gap-6 xl:gap-[25px]">
+                  <div className="flex flex-col gap-4 xl:gap-[25px]">
+                    <SectionLabel variant="dark" as="h2">Role</SectionLabel>
+                    <p className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[32px]">
+                      <span className="w-[1em] text-[40px] leading-none shrink-0">{'>'}</span>
+                      <span className="leading-[32px]">{agent.role}</span>
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4 xl:gap-[25px]">
+                    <SectionLabel variant="dark" as="h2">Best for</SectionLabel>
+                    <ul className="flex flex-col gap-1">
+                      {agent.bestFor.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[32px]"
+                        >
+                          <span className="w-[1em] text-[40px] leading-none shrink-0">{'>'}</span>
+                          <span className="leading-[32px]">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               {/* Mission */}
-              <div>
-                <SectionLabel variant="blue" as="h2">mission</SectionLabel>
-                <div className="mt-2 border-standard border-black p-4">
-                  <p className="font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
+              <div className="flex flex-col gap-4 xl:gap-[25px] xl:px-10 xl:my-12">
+                <SectionLabel variant="blue" as="h2">Mission</SectionLabel>
+                <div className="border-standard border-black outline outline-3 outline-text px-4 py-3 xl:px-[25px] xl:py-4">
+                  <p className="font-pixbob-regular text-lg md:text-xl xl:text-[28px] leading-[32px]">
                     {agent.mission}
                   </p>
                 </div>
               </div>
 
               {/* Tone of Voice */}
-              <div>
-                <SectionLabel variant="lime" as="h2">tone of voice</SectionLabel>
-                <div className="mt-2">
-                  <StatBarGroup>
-                    <StatBar label="warm" value={agent.toneOfVoice.warm} />
-                    <StatBar label="direct" value={agent.toneOfVoice.direct} />
-                    <StatBar label="playful" value={agent.toneOfVoice.playful} />
-                    <StatBar label="formal" value={agent.toneOfVoice.formal} />
-                    <StatBar label="calm" value={agent.toneOfVoice.calm} />
-                  </StatBarGroup>
-                </div>
+              <div className="flex flex-col gap-4 xl:gap-[25px] xl:px-10">
+                <SectionLabel variant="lime" as="h2">Tone of Voice</SectionLabel>
+                <StatBarGroup>
+                  <StatBar label="Warm" value={agent.toneOfVoice.warm} />
+                  <StatBar label="Direct" value={agent.toneOfVoice.direct} />
+                  <StatBar label="Playful" value={agent.toneOfVoice.playful} />
+                  <StatBar label="Formal" value={agent.toneOfVoice.formal} />
+                  <StatBar label="Calm" value={agent.toneOfVoice.calm} />
+                </StatBarGroup>
               </div>
             </>
           )}
 
-          {/* Contact CTA — always visible regardless of agent data */}
-          <Button variant="primary" size="md" href="/contact" className="w-full justify-center">
-            contact me
-          </Button>
+          {/* CTA — right-aligned */}
+          <div className="flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              href="/agentdex/lorenzo-santucci"
+              className="xl:text-[32px] xl:px-3 xl:py-1.5"
+              icon={
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 34 34"
+                  fill="currentColor"
+                  className="size-[34px]"
+                  aria-hidden="true"
+                >
+                  {/* Pixel-art chat bubble */}
+                  <rect x="3" y="6" width="28" height="18" rx="0" />
+                  <rect x="7" y="24" width="4" height="4" />
+                  <rect x="3" y="24" width="4" height="4" />
+                  {/* Dots */}
+                  <rect x="10" y="12" width="4" height="4" fill="var(--accent)" />
+                  <rect x="15" y="12" width="4" height="4" fill="var(--accent)" />
+                  <rect x="20" y="12" width="4" height="4" fill="var(--accent)" />
+                </svg>
+              }
+            >
+              let&apos;s talk
+            </Button>
+          </div>
         </aside>
       </div>
+
     </InnerPageLayout>
   );
 }

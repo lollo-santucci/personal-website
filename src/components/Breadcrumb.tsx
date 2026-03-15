@@ -8,22 +8,14 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ items, current }: BreadcrumbProps) {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-2 font-pixbob-regular text-base md:text-lg xl:text-[28px]">
+      <ol className="flex flex-wrap items-center gap-2 font-pixbob-regular text-base md:text-lg xl:text-[48px]">
         {items.map((item) => (
           <li key={item.href} className="flex items-center gap-2">
             <TransitionLink href={item.href} className="text-text-muted hover:text-text">
-              {item.label}
+              {item.label}/
             </TransitionLink>
-            <span className="text-text-muted" aria-hidden="true">
-              →
-            </span>
           </li>
         ))}
-        <li>
-          <span className="text-text" aria-current="page">
-            {current}
-          </span>
-        </li>
       </ol>
     </nav>
   );

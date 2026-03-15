@@ -84,13 +84,14 @@ export default async function BlogDetailPage({
       ctaHeadline="Read something interesting?"
       ctaBody="Let's discuss it!"
       crossLinkSections={crossLinkSections}
+      beforeTitle={
+        <Breadcrumb
+          items={[{ label: 'Blog', href: '/blog' }]}
+          current={post.title}
+        />
+      }
     >
-      <Breadcrumb
-        items={[{ label: 'Blog', href: '/blog' }]}
-        current={post.title}
-      />
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 font-pixbob-regular text-base md:text-lg xl:text-[26px]">
+      <div className="flex flex-wrap items-center gap-3 font-pixbob-regular text-base md:text-lg xl:text-[26px]">
         <time className="text-text-muted" dateTime={String(post.date)}>
           {formatDateDDMMYYYY(post.date)}
         </time>
