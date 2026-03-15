@@ -24,4 +24,17 @@ export interface Agent {
     systemPrompt?: string;
     tools?: string[];
   };
+
+  // Agent_Extended_Fields (R17)
+  index: number;
+  mission: string;
+  bestFor: string[];
+  toneOfVoice: {
+    warm: number;
+    direct: number;
+    playful: number;
+    formal: number;
+    calm: number;
+  };
+  greeting?: string;
 }

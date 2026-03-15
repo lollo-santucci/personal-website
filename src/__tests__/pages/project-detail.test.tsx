@@ -2,34 +2,54 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import fc from 'fast-check';
 import type { Project } from '@/lib/types';
 import type { Slug, AssetPath } from '@/lib/types/common';
 
 vi.mock('@/lib/content', () => ({
   getProjects: vi.fn(),
   getProjectBySlug: vi.fn(),
+  getAgents: vi.fn(),
+  getBlogPosts: vi.fn(),
   renderMDX: vi.fn(),
 }));
+vi.mock('@/lib/content/agent-utils', () => ({
+  sortAgentsByIndex: vi.fn((agents: any[]) => [...agents].sort((a: any, b: any) => a.index - b.index)),
+}));
 class NotFoundError extends Error {
-  constructor() {
-    super('NEXT_NOT_FOUND');
-  }
+  constructor() { super('NEXT_NOT_FOUND'); }
 }
 vi.mock('next/navigation', () => ({
-  notFound: vi.fn(() => {
-    throw new NotFoundError();
-  }),
+  notFound: vi.fn(() => { throw new NotFoundError(); }),
 }));
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/components/InnerPageLayout', () => ({
+  default: ({ title, children }: any) => (
+    <div><h1>{title}</h1><div>{children}</div></div>
+  ),
+}));
+vi.mock('@/components/Breadcrumb', () => ({
+  default: ({ items, current }: any) => (
+    <nav aria-label="Breadcrumb">
+      {items.map((i: any) => <a key={i.href} href={i.href}>{i.label}</a>)}
+      <span>{current}</span>
+    </nav>
+  ),
+}));
+vi.mock('@/components/ui/Prose', () => ({
+  default: ({ children }: any) => <div data-testid="prose">{children}</div>,
+}));
+vi.mock('@/components/ui/Badge', () => ({
+  default: ({ children }: any) => <span>{children}</span>,
+}));
+vi.mock('@/components/ProjectMetadataPanel', () => ({
+  default: ({ stack, liveUrl }: any) => (
+    <div data-testid="metadata-panel">
+      {stack?.map((t: string) => <span key={t}>{t}</span>)}
+      {liveUrl && <a href={liveUrl}>Launch</a>}
+    </div>
   ),
 }));
 
-import { getProjects, getProjectBySlug, renderMDX } from '@/lib/content';
+import { getProjects, getProjectBySlug, getAgents, getBlogPosts, renderMDX } from '@/lib/content';
 import { notFound } from 'next/navigation';
 import ProjectDetailPage, {
   generateMetadata,
@@ -41,15 +61,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// --- Helpers ---
-
 function makeProject(overrides: Partial<Project> = {}): Project {
   return {
     title: 'Test Project',
     slug: 'test-project' as unknown as Slug,
     description: 'A test project description',
     content: '# Project content',
-    stack: ['TypeScript'],
+    stack: ['TypeScript', 'React'],
     categories: ['web'],
     status: 'completed' as const,
     highlight: false,
@@ -57,233 +75,117 @@ function makeProject(overrides: Partial<Project> = {}): Project {
   } as Project;
 }
 
-// --- PBT generators ---
-
-const wordArb = fc.stringMatching(/^[A-Za-z0-9]+$/, {
-  minLength: 1,
-  maxLength: 20,
-});
-
-const slugArb = fc
-  .stringMatching(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-    minLength: 1,
-    maxLength: 30,
-  })
-  .filter((s) => s.length > 0);
-
-const projectArb: fc.Arbitrary<Project> = fc
-  .record({
-    title: wordArb.map((s) => `Project ${s}`),
-    slug: slugArb,
-    description: wordArb.map((s) => `Description ${s}`),
-    content: fc.constant('# Content'),
-    stack: fc.array(wordArb, { minLength: 1, maxLength: 4 }),
-    categories: fc.array(wordArb, { minLength: 1, maxLength: 3 }),
-    status: fc.constantFrom(
-      'completed' as const,
-      'in-progress' as const,
-      'ongoing' as const,
-    ),
-    highlight: fc.boolean(),
-    links: fc.option(
-      fc.record({
-        live: fc.option(fc.webUrl(), { nil: undefined }),
-        github: fc.option(fc.webUrl(), { nil: undefined }),
-        demo: fc.option(fc.webUrl(), { nil: undefined }),
-      }),
-      { nil: undefined },
-    ),
-    image: fc.option(
-      wordArb.map((s) => `/assets/${s}.png` as unknown as AssetPath),
-      { nil: undefined },
-    ),
-    order: fc.option(fc.integer({ min: 0, max: 100 }), { nil: undefined }),
-  })
-  .map((raw) => ({
-    ...raw,
-    slug: raw.slug as unknown as Slug,
-  }));
+function setupMocks(project: Project | null = makeProject()) {
+  vi.mocked(getProjectBySlug).mockResolvedValue(project);
+  vi.mocked(renderMDX).mockResolvedValue(<p>Mocked MDX</p>);
+  vi.mocked(getAgents).mockResolvedValue([]);
+  vi.mocked(getBlogPosts).mockResolvedValue([]);
+}
 
 describe('Project Detail Page', () => {
-  // --- P8 (PBT): Dynamic route metadata includes entity title and summary ---
-
-  /**
-   * Feature: core-content-pages, Property 8: Dynamic route metadata includes entity title and summary
-   * Validates: Requirements 4.8, 12.1, 12.3
-   */
-  it('P8: generateMetadata returns project title and description for any project', async () => {
-    await fc.assert(
-      fc.asyncProperty(projectArb, async (project) => {
-        vi.mocked(getProjectBySlug).mockResolvedValue(project);
-
-        const meta = await generateMetadata({
-          params: Promise.resolve({ slug: String(project.slug) }),
-        });
-
-        expect(meta.title).toBe(project.title);
-        expect(meta.description).toBe(project.description);
-      }),
-    );
+  it('renders project title as h1', async () => {
+    setupMocks(makeProject({ title: 'Cool Project' }));
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Cool Project' })).toBeInTheDocument();
   });
 
-  it('P8: generateMetadata returns empty object when project not found', async () => {
+  it('renders breadcrumb with link to /projects', async () => {
+    setupMocks();
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    const projectsLink = screen.getByRole('link', { name: 'Projects' });
+    expect(projectsLink).toHaveAttribute('href', '/projects');
+  });
+
+  it('renders hero image when project has image', async () => {
+    setupMocks(makeProject({ image: '/assets/screenshot.png' as unknown as AssetPath }));
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    const { container } = render(el);
+    const img = container.querySelector('img');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/assets/screenshot.png');
+  });
+
+  it('renders tech badges', async () => {
+    setupMocks(makeProject({ stack: ['Go', 'Rust'] }));
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    expect(screen.getAllByText('Go').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Rust').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders MDX content via Prose', async () => {
+    setupMocks();
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    expect(screen.getByTestId('prose')).toBeInTheDocument();
+  });
+
+  it('renders ProjectMetadataPanel', async () => {
+    setupMocks();
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    expect(screen.getByTestId('metadata-panel')).toBeInTheDocument();
+  });
+
+  it('still renders title when renderMDX throws', async () => {
+    vi.mocked(getProjectBySlug).mockResolvedValue(makeProject({ title: 'Resilient Project' }));
+    vi.mocked(renderMDX).mockRejectedValue(new Error('MDX compilation failed'));
+    vi.mocked(getAgents).mockResolvedValue([]);
+    vi.mocked(getBlogPosts).mockResolvedValue([]);
+
+    const el = await ProjectDetailPage({ params: Promise.resolve({ slug: 'test-project' }) });
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Resilient Project' })).toBeInTheDocument();
+    expect(screen.getByText('Content could not be rendered.')).toBeInTheDocument();
+  });
+
+  it('calls notFound() when project does not exist', async () => {
+    setupMocks(null);
+    await expect(
+      ProjectDetailPage({ params: Promise.resolve({ slug: 'nonexistent' }) }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(notFound).toHaveBeenCalled();
+  });
+});
+
+describe('Project Detail generateStaticParams', () => {
+  it('returns all project slugs', async () => {
+    vi.mocked(getProjects).mockResolvedValue([
+      makeProject({ slug: 'alpha' as unknown as Slug }),
+      makeProject({ slug: 'beta' as unknown as Slug }),
+    ]);
+    const params = await generateStaticParams();
+    expect(params).toEqual([{ slug: 'alpha' }, { slug: 'beta' }]);
+  });
+
+  it('returns empty array when no projects exist', async () => {
+    vi.mocked(getProjects).mockResolvedValue([]);
+    const params = await generateStaticParams();
+    expect(params).toEqual([]);
+  });
+});
+
+describe('Project Detail generateMetadata', () => {
+  it('returns project title and description', async () => {
+    vi.mocked(getProjectBySlug).mockResolvedValue(
+      makeProject({ title: 'My Project', description: 'A great project' }),
+    );
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'my-project' }) });
+    expect(meta.title).toBe('My Project');
+    expect(meta.description).toBe('A great project');
+  });
+
+  it('returns empty object when project not found', async () => {
     vi.mocked(getProjectBySlug).mockResolvedValue(null);
-
-    const meta = await generateMetadata({
-      params: Promise.resolve({ slug: 'nonexistent' }),
-    });
-
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'nonexistent' }) });
     expect(meta).toEqual({});
   });
 
-  // --- P9 (unit): generateStaticParams returns all slugs ---
-
-  describe('P9: generateStaticParams', () => {
-    it('returns all project slugs from the content loader', async () => {
-      const projects = [
-        makeProject({ slug: 'alpha' as unknown as Slug }),
-        makeProject({ slug: 'beta' as unknown as Slug }),
-        makeProject({ slug: 'gamma' as unknown as Slug }),
-      ];
-      vi.mocked(getProjects).mockResolvedValue(projects);
-
-      const params = await generateStaticParams();
-
-      expect(params).toEqual([
-        { slug: 'alpha' },
-        { slug: 'beta' },
-        { slug: 'gamma' },
-      ]);
-    });
-
-    it('returns empty array when no projects exist', async () => {
-      vi.mocked(getProjects).mockResolvedValue([]);
-
-      const params = await generateStaticParams();
-
-      expect(params).toEqual([]);
-    });
-  });
-
-  // --- P11 (PBT): Project detail conditionally displays optional fields ---
-
-  /**
-   * Feature: core-content-pages, Property 11: Project detail conditionally displays optional fields
-   * Validates: Requirements 4.4, 4.5
-   */
-  describe('P11: conditional optional fields', () => {
-    it('conditionally renders links and image based on project data', async () => {
-      await fc.assert(
-        fc.asyncProperty(projectArb, async (project) => {
-          cleanup();
-          vi.mocked(getProjectBySlug).mockResolvedValue(project);
-          vi.mocked(renderMDX).mockResolvedValue(<p>Mocked MDX</p>);
-
-          const el = await ProjectDetailPage({
-            params: Promise.resolve({ slug: String(project.slug) }),
-          });
-          const { container } = render(el);
-
-          // Image: present if project.image is defined
-          const img = container.querySelector('img');
-          if (project.image) {
-            expect(img).toBeInTheDocument();
-            expect(img).toHaveAttribute('src', String(project.image));
-          } else {
-            expect(img).not.toBeInTheDocument();
-          }
-
-          // Links: present only if links object has at least one defined value
-          const hasLinks =
-            project.links &&
-            (project.links.live || project.links.github || project.links.demo);
-
-          if (hasLinks) {
-            if (project.links!.live) {
-              expect(
-                screen.getByRole('link', { name: 'Live Site' }),
-              ).toHaveAttribute('href', project.links!.live);
-            }
-            if (project.links!.github) {
-              expect(
-                screen.getByRole('link', { name: 'GitHub' }),
-              ).toHaveAttribute('href', project.links!.github);
-            }
-            if (project.links!.demo) {
-              expect(
-                screen.getByRole('link', { name: 'Demo' }),
-              ).toHaveAttribute('href', project.links!.demo);
-            }
-          } else {
-            expect(
-              screen.queryByRole('link', { name: 'Live Site' }),
-            ).not.toBeInTheDocument();
-            expect(
-              screen.queryByRole('link', { name: 'GitHub' }),
-            ).not.toBeInTheDocument();
-            expect(
-              screen.queryByRole('link', { name: 'Demo' }),
-            ).not.toBeInTheDocument();
-          }
-
-          cleanup();
-        }),
-      );
-    });
-  });
-
-  // --- P13 (unit): MDX render failure does not crash the page ---
-
-  describe('P13: MDX render failure resilience', () => {
-    it('still renders the project title when renderMDX throws', async () => {
-      const project = makeProject({ title: 'Resilient Project' });
-      vi.mocked(getProjectBySlug).mockResolvedValue(project);
-      vi.mocked(renderMDX).mockRejectedValue(new Error('MDX compilation failed'));
-
-      const el = await ProjectDetailPage({
-        params: Promise.resolve({ slug: 'test-project' }),
-      });
-      render(el);
-
-      expect(
-        screen.getByRole('heading', { level: 1, name: 'Resilient Project' }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText('Content could not be rendered.'),
-      ).toBeInTheDocument();
-    });
-  });
-
-  // --- 404: notFound() called when project doesn't exist ---
-
-  describe('404 behavior', () => {
-    it('calls notFound() when project slug does not match', async () => {
-      vi.mocked(getProjectBySlug).mockResolvedValue(null);
-
-      await expect(
-        ProjectDetailPage({
-          params: Promise.resolve({ slug: 'nonexistent' }),
-        }),
-      ).rejects.toThrow('NEXT_NOT_FOUND');
-
-      expect(notFound).toHaveBeenCalled();
-    });
-  });
-
-  // --- Back navigation: link to /projects ---
-
-  describe('Back navigation', () => {
-    it('renders a link back to /projects', async () => {
-      vi.mocked(getProjectBySlug).mockResolvedValue(makeProject());
-      vi.mocked(renderMDX).mockResolvedValue(<p>Mocked MDX</p>);
-
-      const el = await ProjectDetailPage({
-        params: Promise.resolve({ slug: 'test-project' }),
-      });
-      render(el);
-
-      const backLink = screen.getByRole('link', { name: /back to projects/i });
-      expect(backLink).toHaveAttribute('href', '/projects');
-    });
+  it('includes canonical URL', async () => {
+    vi.mocked(getProjectBySlug).mockResolvedValue(makeProject());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'test-project' }) });
+    expect(meta.alternates?.canonical).toBe('/projects/test-project');
   });
 });

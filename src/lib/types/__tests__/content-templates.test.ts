@@ -103,13 +103,18 @@ const CONTENT_TYPES: Record<string, ContentTypeMeta> = {
     fields: {
       name: { optionality: 'required' },
       slug: { optionality: 'required', brandedType: 'Slug' },
+      index: { optionality: 'required' },
       role: { optionality: 'required' },
       personality: { optionality: 'required' },
+      mission: { optionality: 'required' },
+      bestFor: { optionality: 'required' },
+      toneOfVoice: { optionality: 'required' },
       capabilities: { optionality: 'required' },
       status: {
         optionality: 'required',
         enumValues: ['active', 'coming-soon', 'experimental'],
       },
+      greeting: { optionality: 'optional' },
       portrait: { optionality: 'optional', brandedType: 'AssetPath' },
       world: { optionality: 'optional' },
       software: { optionality: 'optional' },

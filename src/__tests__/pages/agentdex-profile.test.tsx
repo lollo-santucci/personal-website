@@ -1,35 +1,55 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import * as fc from 'fast-check';
-import { agentArbitrary } from '@/__tests__/lib/content/agent-utils.test';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import type { Agent } from '@/lib/types';
-import type { Slug, AssetPath } from '@/lib/types/common';
+import type { Slug } from '@/lib/types/common';
 
 vi.mock('@/lib/content', () => ({
   getAgents: vi.fn(),
   getAgentBySlug: vi.fn(),
+  getBlogPosts: vi.fn(),
+  getProjects: vi.fn(),
 }));
 class NotFoundError extends Error {
-  constructor() {
-    super('NEXT_NOT_FOUND');
-  }
+  constructor() { super('NEXT_NOT_FOUND'); }
 }
 vi.mock('next/navigation', () => ({
-  notFound: vi.fn(() => {
-    throw new NotFoundError();
-  }),
+  notFound: vi.fn(() => { throw new NotFoundError(); }),
 }));
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/components/InnerPageLayout', () => ({
+  default: ({ title, children }: any) => (
+    <div><h1>{title}</h1><div>{children}</div></div>
   ),
 }));
+vi.mock('@/components/Breadcrumb', () => ({
+  default: ({ items, current }: any) => (
+    <nav aria-label="Breadcrumb">
+      {items.map((i: any) => <a key={i.href} href={i.href}>{i.label}</a>)}
+      <span>{current}</span>
+    </nav>
+  ),
+}));
+vi.mock('@/components/ChatSection', () => ({
+  default: ({ agentName, greeting }: any) => (
+    <section data-testid="chat-section">
+      <span>{agentName}</span>
+      {greeting && <span>{greeting}</span>}
+    </section>
+  ),
+}));
+vi.mock('@/components/ui/SectionLabel', () => ({
+  default: ({ children }: any) => <span>{children}</span>,
+}));
+vi.mock('@/components/ui/RPGSelector', () => ({
+  default: () => <span>&gt;</span>,
+}));
+vi.mock('@/components/ui/StatBar', () => ({
+  default: ({ label, value }: any) => <div data-testid={`stat-${label}`}>{label}: {value}</div>,
+  StatBarGroup: ({ children }: any) => <div>{children}</div>,
+}));
 
-import { getAgents, getAgentBySlug } from '@/lib/content';
+import { getAgents, getAgentBySlug, getBlogPosts, getProjects } from '@/lib/content';
 import { notFound } from 'next/navigation';
 import AgentProfilePage, {
   generateMetadata,
@@ -41,255 +61,136 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// --- Helpers ---
-
 function makeAgent(overrides: Partial<Agent> = {}): Agent {
   return {
     name: 'Test Agent',
     slug: 'test-agent' as unknown as Slug,
     role: 'Testing and QA',
-    personality: 'Thorough and methodical.\nAlways finds the edge cases.',
-    capabilities: ['testing', 'qa', 'automation'],
+    personality: 'Thorough and methodical.',
+    capabilities: ['testing', 'qa'],
     status: 'active' as const,
+    index: 42,
+    mission: 'Find all the bugs.',
+    bestFor: ['Unit testing', 'Integration testing'],
+    toneOfVoice: { warm: 3, direct: 5, playful: 2, formal: 4, calm: 3 },
     ...overrides,
   };
 }
 
+function setupMocks(agent: Agent | null = makeAgent()) {
+  vi.mocked(getAgentBySlug).mockResolvedValue(agent);
+  vi.mocked(getBlogPosts).mockResolvedValue([]);
+  vi.mocked(getProjects).mockResolvedValue([]);
+}
+
 describe('Agent Profile Page', () => {
-  describe('renders required fields', () => {
-    it('renders agent name as h1 heading', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent({ name: 'Sales Agent' }));
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      expect(screen.getByRole('heading', { level: 1, name: 'Sales Agent' })).toBeInTheDocument();
-    });
-
-    it('renders agent role', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent({ role: 'Sales & Lead Generation' }));
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      expect(screen.getByText('Sales & Lead Generation')).toBeInTheDocument();
-    });
-
-    it('renders status badge with correct label', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent({ status: 'experimental' }));
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      expect(screen.getByText('Experimental')).toBeInTheDocument();
-    });
-
-    it('renders full personality text including all lines', async () => {
-      const personality = 'Thorough and methodical.\nAlways finds the edge cases.';
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent({ personality }));
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      // whitespace-pre-line preserves newlines in the DOM, so match each line individually
-      expect(screen.getByText(/Thorough and methodical\./)).toBeInTheDocument();
-      expect(screen.getByText(/Always finds the edge cases\./)).toBeInTheDocument();
-    });
-
-    it('renders capabilities as list items', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(
-        makeAgent({ capabilities: ['testing', 'qa', 'automation'] }),
-      );
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      expect(screen.getByText('testing')).toBeInTheDocument();
-      expect(screen.getByText('qa')).toBeInTheDocument();
-      expect(screen.getByText('automation')).toBeInTheDocument();
-      const listItems = screen.getAllByRole('listitem');
-      expect(listItems).toHaveLength(3);
-    });
+  it('renders agent name as h1 heading', async () => {
+    setupMocks(makeAgent({ name: 'Sales Agent' }));
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Sales Agent' })).toBeInTheDocument();
   });
 
-  describe('portrait rendering', () => {
-    it('renders img with alt text when portrait is present', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(
-        makeAgent({
-          name: 'Portrait Agent',
-          portrait: '/assets/portrait.png' as unknown as AssetPath,
-        }),
-      );
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      const img = screen.getByRole('img', { name: 'Portrait Agent' });
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', '/assets/portrait.png');
-    });
-
-    it('does not render img when portrait is absent', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent({ portrait: undefined }));
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      const { container } = render(el);
-      expect(container.querySelector('img')).not.toBeInTheDocument();
-    });
+  it('renders agent role', async () => {
+    setupMocks(makeAgent({ role: 'Sales & Lead Generation' }));
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByText('Sales & Lead Generation')).toBeInTheDocument();
   });
 
-  describe('ChatPlaceholder', () => {
-    it('renders a button with "Start Chat" text', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent());
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      const button = screen.getByRole('button', { name: /start chat/i });
-      expect(button).toBeInTheDocument();
-      expect(screen.getByText('Start Chat')).toBeInTheDocument();
-    });
+  it('renders bestFor items', async () => {
+    setupMocks(makeAgent({ bestFor: ['Cold outreach', 'Lead scoring'] }));
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByText('Cold outreach')).toBeInTheDocument();
+    expect(screen.getByText('Lead scoring')).toBeInTheDocument();
   });
 
-  describe('back navigation', () => {
-    it('renders a link back to /agentdex with "Back to Agentdex" text', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent());
-      const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
-      render(el);
-      const backLink = screen.getByRole('link', { name: /back to agentdex/i });
-      expect(backLink).toBeInTheDocument();
-      expect(backLink).toHaveAttribute('href', '/agentdex');
-    });
+  it('renders mission text', async () => {
+    setupMocks(makeAgent({ mission: 'Close every deal.' }));
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByText('Close every deal.')).toBeInTheDocument();
   });
 
-  describe('404 behavior', () => {
-    it('calls notFound() when agent is null', async () => {
-      vi.mocked(getAgentBySlug).mockResolvedValue(null);
-      await expect(
-        AgentProfilePage({ params: Promise.resolve({ slug: 'nonexistent' }) }),
-      ).rejects.toThrow('NEXT_NOT_FOUND');
-      expect(notFound).toHaveBeenCalled();
-    });
+  it('renders tone of voice stat bars', async () => {
+    setupMocks();
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByTestId('stat-warm')).toBeInTheDocument();
+    expect(screen.getByTestId('stat-direct')).toBeInTheDocument();
+    expect(screen.getByTestId('stat-playful')).toBeInTheDocument();
+    expect(screen.getByTestId('stat-formal')).toBeInTheDocument();
+    expect(screen.getByTestId('stat-calm')).toBeInTheDocument();
   });
 
-  describe('generateStaticParams', () => {
-    it('returns all agent slugs', async () => {
-      const agents = [
-        makeAgent({ slug: 'alpha-agent' as unknown as Slug }),
-        makeAgent({ slug: 'beta-agent' as unknown as Slug }),
-      ];
-      vi.mocked(getAgents).mockResolvedValue(agents);
-      const params = await generateStaticParams();
-      expect(params).toEqual([{ slug: 'alpha-agent' }, { slug: 'beta-agent' }]);
-    });
+  it('renders formatted index number', async () => {
+    setupMocks(makeAgent({ index: 7 }));
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByText('#007')).toBeInTheDocument();
+  });
 
-    it('returns empty array when no agents exist', async () => {
-      vi.mocked(getAgents).mockResolvedValue([]);
-      const params = await generateStaticParams();
-      expect(params).toEqual([]);
-    });
+  it('renders ChatSection', async () => {
+    setupMocks();
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    expect(screen.getByTestId('chat-section')).toBeInTheDocument();
+  });
+
+  it('renders breadcrumb with link to /agentdex', async () => {
+    setupMocks();
+    const el = await AgentProfilePage({ params: Promise.resolve({ slug: 'test-agent' }) });
+    render(el);
+    const breadcrumbLink = screen.getByRole('link', { name: 'Agentdex' });
+    expect(breadcrumbLink).toHaveAttribute('href', '/agentdex');
+  });
+
+  it('calls notFound() when agent is null', async () => {
+    setupMocks(null);
+    await expect(
+      AgentProfilePage({ params: Promise.resolve({ slug: 'nonexistent' }) }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(notFound).toHaveBeenCalled();
   });
 });
 
+describe('Agent Profile generateStaticParams', () => {
+  it('returns all agent slugs', async () => {
+    vi.mocked(getAgents).mockResolvedValue([
+      makeAgent({ slug: 'alpha-agent' as unknown as Slug }),
+      makeAgent({ slug: 'beta-agent' as unknown as Slug }),
+    ]);
+    const params = await generateStaticParams();
+    expect(params).toEqual([{ slug: 'alpha-agent' }, { slug: 'beta-agent' }]);
+  });
 
-/** Feature: agentdex-shell, Property 5: Profile metadata is a readable sentence */
-describe('Property 5: Profile metadata is a readable sentence', () => {
-  /** Validates: Requirements 7.3, 7.4 */
-
-  it('title equals agent name and description is a complete sentence containing name and role', async () => {
-    await fc.assert(
-      fc.asyncProperty(agentArbitrary, async (agent) => {
-        vi.mocked(getAgentBySlug).mockResolvedValue(agent);
-
-        const metadata = await generateMetadata({
-          params: Promise.resolve({ slug: String(agent.slug) }),
-        });
-
-        // title equals agent name
-        expect(metadata.title).toBe(agent.name);
-
-        // description is a string containing both name and role
-        expect(typeof metadata.description).toBe('string');
-        const desc = metadata.description as string;
-        expect(desc).toContain(agent.name);
-        expect(desc).toContain(agent.role);
-
-        // description ends with a period (complete sentence)
-        expect(desc.endsWith('.')).toBe(true);
-
-        // description is longer than just the raw role value
-        expect(desc.length).toBeGreaterThan(agent.role.length);
-      }),
-      { numRuns: 100 },
-    );
+  it('returns empty array when no agents exist', async () => {
+    vi.mocked(getAgents).mockResolvedValue([]);
+    const params = await generateStaticParams();
+    expect(params).toEqual([]);
   });
 });
 
-
-/** Feature: agentdex-shell, Property 4: Profile page renders required fields and excludes world/software */
-describe('Property 4: Profile page renders required fields and excludes world/software', () => {
-  /** Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6 */
-
-  it('renders name, role, status, personality, capabilities, chat placeholder and excludes world/software', async () => {
-    await fc.assert(
-      fc.asyncProperty(agentArbitrary, async (agent) => {
-        vi.mocked(getAgentBySlug).mockResolvedValue(agent);
-
-        const el = await AgentProfilePage({
-          params: Promise.resolve({ slug: String(agent.slug) }),
-        });
-        const { container } = render(el);
-
-        try {
-          // 1. Agent name appears as <h1> heading
-          const h1 = container.querySelector('h1');
-          expect(h1).not.toBeNull();
-          expect(h1!.textContent).toBe(agent.name);
-
-          // 2. Agent role appears in the rendered output
-          expect(container.textContent).toContain(agent.role);
-
-          // 3. Full personality text appears
-          expect(container.textContent).toContain(agent.personality);
-
-          // 4. Each capability appears as a list item
-          const listItems = container.querySelectorAll('li');
-          expect(listItems.length).toBe(agent.capabilities.length);
-          for (const cap of agent.capabilities) {
-            expect(container.textContent).toContain(cap);
-          }
-
-          // 5. ChatPlaceholder button is present (button with aria-disabled="true")
-          const button = container.querySelector('button[aria-disabled="true"]');
-          expect(button).not.toBeNull();
-
-          // 6. When portrait is present, <img> with alt={agent.name} exists
-          const img = container.querySelector('img');
-          if (agent.portrait) {
-            expect(img).not.toBeNull();
-            expect(img!.getAttribute('alt')).toBe(agent.name);
-          } else {
-            // 7. When portrait is absent, no <img> element exists
-            expect(img).toBeNull();
-          }
-
-          // 8. When world is present, "ufficio" does NOT appear in rendered text
-          //    (excluding values that might legitimately appear in other agent fields)
-          if (agent.world) {
-            const textContent = container.textContent ?? '';
-            // Remove the agent's own field values to isolate world leakage
-            let sanitized = textContent;
-            sanitized = sanitized.replaceAll(agent.name, '');
-            sanitized = sanitized.replaceAll(agent.role, '');
-            sanitized = sanitized.replaceAll(agent.personality, '');
-            for (const cap of agent.capabilities) {
-              sanitized = sanitized.replaceAll(cap, '');
-            }
-            expect(sanitized).not.toContain('ufficio');
-          }
-
-          // 9. When software is present, "test-model" does NOT appear in rendered text
-          if (agent.software) {
-            const textContent = container.textContent ?? '';
-            let sanitized = textContent;
-            sanitized = sanitized.replaceAll(agent.name, '');
-            sanitized = sanitized.replaceAll(agent.role, '');
-            sanitized = sanitized.replaceAll(agent.personality, '');
-            for (const cap of agent.capabilities) {
-              sanitized = sanitized.replaceAll(cap, '');
-            }
-            expect(sanitized).not.toContain('test-model');
-          }
-        } finally {
-          cleanup();
-        }
-      }),
-      { numRuns: 100 },
+describe('Agent Profile generateMetadata', () => {
+  it('returns agent name as title and role+mission as description', async () => {
+    vi.mocked(getAgentBySlug).mockResolvedValue(
+      makeAgent({ name: 'Sales Agent', role: 'Sales', mission: 'Close deals.' }),
     );
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'sales-agent' }) });
+    expect(meta.title).toBe('Sales Agent');
+    expect(meta.description).toBe('Sales. Close deals.');
+  });
+
+  it('returns empty object when agent not found', async () => {
+    vi.mocked(getAgentBySlug).mockResolvedValue(null);
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'nonexistent' }) });
+    expect(meta).toEqual({});
+  });
+
+  it('includes canonical URL', async () => {
+    vi.mocked(getAgentBySlug).mockResolvedValue(makeAgent());
+    const meta = await generateMetadata({ params: Promise.resolve({ slug: 'test-agent' }) });
+    expect(meta.alternates?.canonical).toBe('/agentdex/test-agent');
   });
 });

@@ -26,9 +26,9 @@ type ButtonAsButton = ButtonBaseProps & { href?: undefined } & Omit<
 export type ButtonProps = ButtonAsAnchor | ButtonAsButton;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-surface',
-  secondary: 'bg-surface text-text',
-  dark: 'bg-text text-surface',
+  primary: 'bg-primary text-surface hover:bg-primary/80',
+  secondary: 'bg-surface text-text hover:bg-text/5',
+  dark: 'bg-text text-surface hover:bg-text/80',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -50,7 +50,7 @@ export default function Button(props: ButtonProps) {
   } = props;
 
   const classes = [
-    'inline-flex items-center gap-2 border-standard border-black font-pixbob-regular',
+    'group inline-flex items-center gap-2 border-standard border-black font-pixbob-regular transition-colors duration-200 motion-reduce:transition-none',
     variantClasses[variant],
     sizeClasses[size],
     className,

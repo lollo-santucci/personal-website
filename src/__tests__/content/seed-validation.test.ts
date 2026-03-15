@@ -194,7 +194,7 @@ describe('P15: Seed content contains no placeholder text', () => {
 
 /**
  * Agent seed content validation.
- * Validates: Requirements 5.1, 5.2, 5.5, 5.6
+ * Validates: Requirements 5.1, 5.2, 5.5, 5.6, 18.1, 18.2, 18.4, 18.5
  */
 describe('Agent seed content validation', () => {
   it('contains at least 2 agents', async () => {
@@ -217,11 +217,135 @@ describe('Agent seed content validation', () => {
   it('no agent contains placeholder text', async () => {
     const agents = await getAgents();
     for (const agent of agents) {
-      const text = `${agent.name} ${agent.role} ${agent.personality} ${agent.capabilities.join(' ')}`.toLowerCase();
+      const text = `${agent.name} ${agent.role} ${agent.personality} ${agent.capabilities.join(' ')} ${agent.mission} ${agent.bestFor.join(' ')}`.toLowerCase();
       for (const pattern of PLACEHOLDER_PATTERNS) {
         expect(
           text.includes(pattern),
           `Found "${pattern}" in agent:${agent.slug}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it('all agents include Agent_Extended_Fields (index, mission, bestFor, toneOfVoice)', async () => {
+    const agents = await getAgents();
+    for (const agent of agents) {
+      expect(typeof agent.index, `agent:${agent.slug} missing index`).toBe('number');
+      expect(agent.mission, `agent:${agent.slug} missing mission`).toBeTruthy();
+      expect(Array.isArray(agent.bestFor), `agent:${agent.slug} bestFor not array`).toBe(true);
+      expect(agent.bestFor.length, `agent:${agent.slug} bestFor is empty`).toBeGreaterThan(0);
+      expect(agent.toneOfVoice, `agent:${agent.slug} missing toneOfVoice`).toBeDefined();
+      for (const dim of ['warm', 'direct', 'playful', 'formal', 'calm'] as const) {
+        const val = agent.toneOfVoice[dim];
+        expect(typeof val, `agent:${agent.slug} toneOfVoice.${dim} not a number`).toBe('number');
+        expect(val, `agent:${agent.slug} toneOfVoice.${dim} out of range`).toBeGreaterThanOrEqual(1);
+        expect(val, `agent:${agent.slug} toneOfVoice.${dim} out of range`).toBeLessThanOrEqual(5);
+      }
+    }
+  });
+
+  it('no agent has empty required string fields', async () => {
+    const agents = await getAgents();
+    for (const agent of agents) {
+      expect(agent.name.trim(), `agent:${agent.slug} name is empty`).not.toBe('');
+      expect(agent.role.trim(), `agent:${agent.slug} role is empty`).not.toBe('');
+      expect(agent.personality.trim(), `agent:${agent.slug} personality is empty`).not.toBe('');
+      expect(agent.mission.trim(), `agent:${agent.slug} mission is empty`).not.toBe('');
+    }
+  });
+
+  it('at least one agent has a greeting field', async () => {
+    const agents = await getAgents();
+    const hasGreeting = agents.some((a) => a.greeting && a.greeting.trim() !== '');
+    expect(hasGreeting).toBe(true);
+  });
+});
+
+/**
+ * Unit Test Check 8: No TODO or lorem ipsum in seed content
+ * Validates: Requirements 18.4, 18.5
+ *
+ * Scans all seed content files for TODO markers and lorem ipsum text.
+ * This is a stricter check than P15 — it specifically targets TODO markers
+ * (case-insensitive, including "TODO:", "TODO -", standalone "TODO") and
+ * lorem ipsum across all content types including agents.
+ */
+describe('Check 8: No TODO or lorem ipsum in seed content', () => {
+  const TODO_PATTERNS = [/\btodo\b/i];
+  const LOREM_PATTERNS = [/lorem\s+ipsum/i];
+
+  function getSeedFilePaths(): string[] {
+    const paths: string[] = [];
+    for (const { dir, ext } of CONTENT_DIRS) {
+      const fullDir = join(process.cwd(), dir);
+      let entries: string[];
+      try {
+        entries = readdirSync(fullDir);
+      } catch {
+        continue;
+      }
+      for (const entry of entries) {
+        if (entry.startsWith('_') || entry.startsWith('.')) continue;
+        if (!entry.endsWith(ext)) continue;
+        paths.push(join(fullDir, entry));
+      }
+    }
+    return paths;
+  }
+
+  it('no seed file contains TODO markers', async () => {
+    const filePaths = getSeedFilePaths();
+    expect(filePaths.length).toBeGreaterThan(0);
+
+    for (const filePath of filePaths) {
+      const content = await readFile(filePath, 'utf-8');
+      for (const pattern of TODO_PATTERNS) {
+        expect(
+          pattern.test(content),
+          `Found TODO marker in ${filePath}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it('no seed file contains lorem ipsum', async () => {
+    const filePaths = getSeedFilePaths();
+    expect(filePaths.length).toBeGreaterThan(0);
+
+    for (const filePath of filePaths) {
+      const content = await readFile(filePath, 'utf-8');
+      for (const pattern of LOREM_PATTERNS) {
+        expect(
+          pattern.test(content),
+          `Found lorem ipsum in ${filePath}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it('no loaded agent entity has TODO or lorem ipsum in content fields', async () => {
+    const agents = await getAgents();
+    for (const agent of agents) {
+      const text = [
+        agent.name,
+        agent.role,
+        agent.personality,
+        agent.mission,
+        ...agent.bestFor,
+        ...agent.capabilities,
+        agent.greeting ?? '',
+      ].join(' ');
+
+      for (const pattern of TODO_PATTERNS) {
+        expect(
+          pattern.test(text),
+          `Found TODO marker in agent:${agent.slug}`,
+        ).toBe(false);
+      }
+      for (const pattern of LOREM_PATTERNS) {
+        expect(
+          pattern.test(text),
+          `Found lorem ipsum in agent:${agent.slug}`,
         ).toBe(false);
       }
     }

@@ -19,3 +19,12 @@ export function sortAgentsByName(agents: Agent[]): Agent[] {
     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
   );
 }
+
+/**
+ * Returns a new array of agents sorted by index ascending.
+ * Does not mutate the input.
+ */
+export function sortAgentsByIndex(agents: Agent[]): Agent[] {
+  return [...agents].sort((a, b) => a.index - b.index);
+}
+

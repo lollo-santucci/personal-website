@@ -1,23 +1,34 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import type { Project } from '@/lib/types';
 import type { Slug } from '@/lib/types/common';
 
 vi.mock('@/lib/content', () => ({
   getProjects: vi.fn(),
+  getBlogPosts: vi.fn(),
+  getAgents: vi.fn(),
 }));
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/lib/content/agent-utils', () => ({
+  sortAgentsByIndex: vi.fn((agents: any[]) => [...agents].sort((a: any, b: any) => a.index - b.index)),
+}));
+vi.mock('@/components/InnerPageLayout', () => ({
+  default: ({ title, children }: any) => (
+    <div><h1>{title}</h1><div>{children}</div></div>
+  ),
+}));
+vi.mock('@/components/ProjectCard', () => ({
+  default: ({ project }: any) => (
+    <article data-testid="project-card">
+      <a href={`/projects/${project.slug}`}>{project.title}</a>
+      <p>{project.description}</p>
+    </article>
   ),
 }));
 
-import { getProjects } from '@/lib/content';
-import ProjectsPage from '@/app/projects/page';
+import { getProjects, getBlogPosts, getAgents } from '@/lib/content';
+import ProjectsPage, { metadata } from '@/app/projects/page';
 
 afterEach(() => {
   cleanup();
@@ -38,52 +49,59 @@ function makeProject(overrides: Partial<Project> = {}): Project {
   } as Project;
 }
 
+function setupMocks(projects: Project[] = []) {
+  vi.mocked(getProjects).mockResolvedValue(projects);
+  vi.mocked(getBlogPosts).mockResolvedValue([]);
+  vi.mocked(getAgents).mockResolvedValue([]);
+}
+
 describe('Projects Index', () => {
-  // --- P10: DOM order matches loader order ---
-
-  describe('P10: sort order preservation', () => {
-    it('renders projects in the same order as the content loader', async () => {
-      const projects = [
-        makeProject({ title: 'Alpha Project', slug: 'alpha' as unknown as Slug }),
-        makeProject({ title: 'Beta Project', slug: 'beta' as unknown as Slug }),
-        makeProject({ title: 'Gamma Project', slug: 'gamma' as unknown as Slug }),
-      ];
-      vi.mocked(getProjects).mockResolvedValue(projects);
-
-      const el = await ProjectsPage();
-      const { container } = render(el);
-
-      // ProjectCard articles are nested inside the grid div, skip the page-level <article> wrapper
-      const grid = container.querySelector('.grid')!;
-      const cardArticles = grid.querySelectorAll('article');
-      expect(cardArticles).toHaveLength(3);
-      expect(within(cardArticles[0] as HTMLElement).getByText('Alpha Project')).toBeInTheDocument();
-      expect(within(cardArticles[1] as HTMLElement).getByText('Beta Project')).toBeInTheDocument();
-      expect(within(cardArticles[2] as HTMLElement).getByText('Gamma Project')).toBeInTheDocument();
-    });
+  it('renders heading "Projects"', async () => {
+    setupMocks([makeProject()]);
+    const el = await ProjectsPage();
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Projects' })).toBeInTheDocument();
   });
 
-  // --- Empty state ---
+  it('renders projects via ProjectCard', async () => {
+    setupMocks([
+      makeProject({ title: 'Alpha Project', slug: 'alpha' as unknown as Slug }),
+      makeProject({ title: 'Beta Project', slug: 'beta' as unknown as Slug }),
+    ]);
+    const el = await ProjectsPage();
+    render(el);
 
-  describe('Empty state', () => {
-    it('displays empty state message when no projects exist', async () => {
-      vi.mocked(getProjects).mockResolvedValue([]);
+    const cards = screen.getAllByTestId('project-card');
+    expect(cards).toHaveLength(2);
+    expect(screen.getByText('Alpha Project')).toBeInTheDocument();
+    expect(screen.getByText('Beta Project')).toBeInTheDocument();
+  });
 
-      const el = await ProjectsPage();
-      render(el);
+  it('renders project links to correct paths', async () => {
+    setupMocks([makeProject({ slug: 'my-proj' as unknown as Slug, title: 'My Proj' })]);
+    const el = await ProjectsPage();
+    render(el);
+    const link = screen.getByRole('link', { name: 'My Proj' });
+    expect(link).toHaveAttribute('href', '/projects/my-proj');
+  });
 
-      expect(screen.getByText('No projects yet.')).toBeInTheDocument();
-    });
+  it('displays empty state message when no projects exist', async () => {
+    setupMocks([]);
+    const el = await ProjectsPage();
+    render(el);
+    expect(screen.getByText(/no projects yet/i)).toBeInTheDocument();
+  });
 
-    it('renders no ProjectCard articles when empty', async () => {
-      vi.mocked(getProjects).mockResolvedValue([]);
+  it('does not render project cards when empty', async () => {
+    setupMocks([]);
+    const el = await ProjectsPage();
+    render(el);
+    expect(screen.queryByTestId('project-card')).not.toBeInTheDocument();
+  });
 
-      const el = await ProjectsPage();
-      const { container } = render(el);
-
-      // No grid rendered when empty, so no ProjectCard articles inside it
-      const grid = container.querySelector('.grid');
-      expect(grid).toBeNull();
-    });
+  it('has static metadata with title "Projects"', () => {
+    expect(metadata.title).toBe('Projects');
+    expect(typeof metadata.description).toBe('string');
+    expect(metadata.alternates?.canonical).toBe('/projects');
   });
 });

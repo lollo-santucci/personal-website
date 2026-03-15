@@ -7,16 +7,40 @@ import type { Slug } from '@/lib/types/common';
 
 vi.mock('@/lib/content', () => ({
   getAgents: vi.fn(),
+  getBlogPosts: vi.fn(),
+  getProjects: vi.fn(),
 }));
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/lib/content/agent-utils', () => ({
+  sortAgentsByIndex: vi.fn((agents: any[]) => [...agents].sort((a: any, b: any) => a.index - b.index)),
+}));
+vi.mock('@/components/InnerPageLayout', () => ({
+  default: ({ title, children }: any) => (
+    <div>
+      <h1>{title}</h1>
+      <div>{children}</div>
+    </div>
   ),
 }));
+vi.mock('@/components/ui/CollectionContainer', () => ({
+  default: ({ children }: any) => <div data-testid="collection">{children}</div>,
+}));
+vi.mock('@/components/ui/CollectionRow', () => ({
+  default: ({ children, action }: any) => (
+    <div data-testid="collection-row">{children}{action}</div>
+  ),
+}));
+vi.mock('@/components/ui/Badge', () => ({
+  default: ({ children }: any) => <span>{children}</span>,
+}));
+vi.mock('@/components/ui/Button', () => ({
+  default: ({ children, href, ...props }: any) =>
+    href ? <a href={href} {...props}>{children}</a> : <button {...props}>{children}</button>,
+}));
+vi.mock('@/components/ui/RPGSelector', () => ({
+  default: () => <span>&gt;</span>,
+}));
 
-import { getAgents } from '@/lib/content';
+import { getAgents, getBlogPosts, getProjects } from '@/lib/content';
 import AgentdexPage, { metadata } from '@/app/agentdex/page';
 
 afterEach(() => {
@@ -32,83 +56,72 @@ function makeAgent(overrides: Partial<Agent> = {}): Agent {
     personality: 'Helpful and thorough.',
     capabilities: ['testing'],
     status: 'active' as const,
+    index: 1,
+    mission: 'Test everything.',
+    bestFor: ['QA'],
+    toneOfVoice: { warm: 3, direct: 4, playful: 2, formal: 3, calm: 5 },
     ...overrides,
   };
 }
 
+function setupMocks(agents: Agent[] = []) {
+  vi.mocked(getAgents).mockResolvedValue(agents);
+  vi.mocked(getBlogPosts).mockResolvedValue([]);
+  vi.mocked(getProjects).mockResolvedValue([]);
+}
+
 describe('Agentdex Index Page', () => {
-  describe('heading and intro text', () => {
-    it('renders the Agentdex heading', async () => {
-      vi.mocked(getAgents).mockResolvedValue([makeAgent()]);
-
-      const el = await AgentdexPage();
-      render(el);
-
-      expect(screen.getByRole('heading', { level: 1, name: 'Agentdex' })).toBeInTheDocument();
-    });
-
-    it('renders introductory text', async () => {
-      vi.mocked(getAgents).mockResolvedValue([makeAgent()]);
-
-      const el = await AgentdexPage();
-      render(el);
-
-      expect(screen.getByText(/AI agents/i)).toBeInTheDocument();
-    });
+  it('renders the Agentdex heading', async () => {
+    setupMocks([makeAgent()]);
+    const el = await AgentdexPage();
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Agentdex' })).toBeInTheDocument();
   });
 
-  describe('sorted agent rendering', () => {
-    it('renders agents in alphabetical order regardless of input order', async () => {
-      const agents = [
-        makeAgent({ name: 'Zeta Agent', slug: 'zeta-agent' as unknown as Slug }),
-        makeAgent({ name: 'Alpha Agent', slug: 'alpha-agent' as unknown as Slug }),
-        makeAgent({ name: 'Beta Agent', slug: 'beta-agent' as unknown as Slug }),
-      ];
-      vi.mocked(getAgents).mockResolvedValue(agents);
+  it('renders agents sorted by index in collection rows', async () => {
+    const agents = [
+      makeAgent({ name: 'Zeta Agent', slug: 'zeta' as unknown as Slug, index: 3 }),
+      makeAgent({ name: 'Alpha Agent', slug: 'alpha' as unknown as Slug, index: 1 }),
+      makeAgent({ name: 'Beta Agent', slug: 'beta' as unknown as Slug, index: 2 }),
+    ];
+    setupMocks(agents);
+    const el = await AgentdexPage();
+    render(el);
 
-      const el = await AgentdexPage();
-      const { container } = render(el);
-
-      const grid = container.querySelector('.grid')!;
-      const cardArticles = grid.querySelectorAll('article');
-      expect(cardArticles).toHaveLength(3);
-
-      const names = Array.from(cardArticles).map(
-        (article) => article.querySelector('h2')!.textContent,
-      );
-      expect(names).toEqual(['Alpha Agent', 'Beta Agent', 'Zeta Agent']);
-    });
+    const rows = screen.getAllByTestId('collection-row');
+    expect(rows).toHaveLength(3);
+    // sortAgentsByIndex mock sorts by index ascending
+    expect(rows[0].textContent).toContain('Alpha Agent');
+    expect(rows[1].textContent).toContain('Beta Agent');
+    expect(rows[2].textContent).toContain('Zeta Agent');
   });
 
-  describe('empty state', () => {
-    it('displays empty state message when no agents exist', async () => {
-      vi.mocked(getAgents).mockResolvedValue([]);
-
-      const el = await AgentdexPage();
-      render(el);
-
-      expect(screen.getByText('No agents yet.')).toBeInTheDocument();
-    });
-
-    it('does not render a grid when empty', async () => {
-      vi.mocked(getAgents).mockResolvedValue([]);
-
-      const el = await AgentdexPage();
-      const { container } = render(el);
-
-      expect(container.querySelector('.grid')).toBeNull();
-    });
+  it('renders formatted index numbers (3 digits)', async () => {
+    setupMocks([makeAgent({ index: 7 })]);
+    const el = await AgentdexPage();
+    render(el);
+    expect(screen.getByText('007')).toBeInTheDocument();
   });
 
-  describe('static metadata', () => {
-    it('has title "Agentdex"', () => {
-      expect(metadata.title).toBe('Agentdex');
-    });
+  it('renders "Meet" buttons linking to agent profile pages', async () => {
+    setupMocks([makeAgent({ slug: 'my-agent' as unknown as Slug })]);
+    const el = await AgentdexPage();
+    render(el);
+    const meetLink = screen.getByRole('link', { name: 'Meet' });
+    expect(meetLink).toHaveAttribute('href', '/agentdex/my-agent');
+  });
 
-    it('has a readable description about AI agents', () => {
-      expect(typeof metadata.description).toBe('string');
-      expect((metadata.description as string).length).toBeGreaterThan(20);
-      expect(metadata.description).toMatch(/agent/i);
-    });
+  it('displays empty state message when no agents exist', async () => {
+    setupMocks([]);
+    const el = await AgentdexPage();
+    render(el);
+    expect(screen.getByText(/no agents yet/i)).toBeInTheDocument();
+  });
+
+  it('has static metadata with title "Agentdex"', () => {
+    expect(metadata.title).toBe('Agentdex');
+    expect(typeof metadata.description).toBe('string');
+    expect((metadata.description as string).length).toBeGreaterThan(20);
+    expect(metadata.alternates?.canonical).toBe('/agentdex');
   });
 });

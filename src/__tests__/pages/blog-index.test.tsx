@@ -1,23 +1,47 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import type { BlogPost } from '@/lib/types';
 import type { Slug, IsoDateString } from '@/lib/types/common';
 
 vi.mock('@/lib/content', () => ({
   getBlogPosts: vi.fn(),
+  getAgents: vi.fn(),
+  getProjects: vi.fn(),
 }));
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/lib/content/agent-utils', () => ({
+  sortAgentsByIndex: vi.fn((agents: any[]) => [...agents].sort((a: any, b: any) => a.index - b.index)),
+}));
+vi.mock('@/components/InnerPageLayout', () => ({
+  default: ({ title, children }: any) => (
+    <div>
+      <h1>{title}</h1>
+      <div>{children}</div>
+    </div>
   ),
 }));
+vi.mock('@/components/ui/CollectionContainer', () => ({
+  default: ({ children }: any) => <div data-testid="collection">{children}</div>,
+}));
+vi.mock('@/components/ui/CollectionRow', () => ({
+  default: ({ children, action }: any) => (
+    <div data-testid="collection-row">{children}{action}</div>
+  ),
+}));
+vi.mock('@/components/ui/Badge', () => ({
+  default: ({ children, variant }: any) => <span data-testid={`badge-${variant}`}>{children}</span>,
+}));
+vi.mock('@/components/ui/Button', () => ({
+  default: ({ children, href, ...props }: any) =>
+    href ? <a href={href} {...props}>{children}</a> : <button {...props}>{children}</button>,
+}));
+vi.mock('@/components/ui/RPGSelector', () => ({
+  default: () => <span>&gt;</span>,
+}));
 
-import { getBlogPosts } from '@/lib/content';
-import BlogPage from '@/app/blog/page';
+import { getBlogPosts, getAgents, getProjects } from '@/lib/content';
+import BlogPage, { metadata } from '@/app/blog/page';
 
 afterEach(() => {
   cleanup();
@@ -37,50 +61,53 @@ function makePost(overrides: Partial<BlogPost> = {}): BlogPost {
   } as BlogPost;
 }
 
+function setupMocks(posts: BlogPost[] = []) {
+  vi.mocked(getBlogPosts).mockResolvedValue(posts);
+  vi.mocked(getAgents).mockResolvedValue([]);
+  vi.mocked(getProjects).mockResolvedValue([]);
+}
+
 describe('Blog Index', () => {
-  // --- P10: DOM order matches loader order ---
-
-  describe('P10: sort order preservation', () => {
-    it('renders posts in the same order as the content loader', async () => {
-      const posts = [
-        makePost({ title: 'First Post', slug: 'first' as unknown as Slug, date: '2025-03-01' as unknown as IsoDateString }),
-        makePost({ title: 'Second Post', slug: 'second' as unknown as Slug, date: '2025-02-01' as unknown as IsoDateString }),
-        makePost({ title: 'Third Post', slug: 'third' as unknown as Slug, date: '2025-01-01' as unknown as IsoDateString }),
-      ];
-      vi.mocked(getBlogPosts).mockResolvedValue(posts);
-
-      const el = await BlogPage();
-      const { container } = render(el);
-
-      const grid = container.querySelector('.grid')!;
-      const cardArticles = grid.querySelectorAll('article');
-      expect(cardArticles).toHaveLength(3);
-      expect(within(cardArticles[0] as HTMLElement).getByText('First Post')).toBeInTheDocument();
-      expect(within(cardArticles[1] as HTMLElement).getByText('Second Post')).toBeInTheDocument();
-      expect(within(cardArticles[2] as HTMLElement).getByText('Third Post')).toBeInTheDocument();
-    });
+  it('renders heading "Blog"', async () => {
+    setupMocks([makePost()]);
+    const el = await BlogPage();
+    render(el);
+    expect(screen.getByRole('heading', { level: 1, name: 'Blog' })).toBeInTheDocument();
   });
 
-  // --- Empty state ---
+  it('renders posts as collection rows with formatted dates', async () => {
+    setupMocks([
+      makePost({ title: 'First Post', slug: 'first' as unknown as Slug, date: '2025-03-01' as unknown as IsoDateString }),
+      makePost({ title: 'Second Post', slug: 'second' as unknown as Slug, date: '2025-02-15' as unknown as IsoDateString }),
+    ]);
+    const el = await BlogPage();
+    render(el);
 
-  describe('Empty state', () => {
-    it('displays empty state message when no posts exist', async () => {
-      vi.mocked(getBlogPosts).mockResolvedValue([]);
+    expect(screen.getByText('First Post')).toBeInTheDocument();
+    expect(screen.getByText('Second Post')).toBeInTheDocument();
+    expect(screen.getByText('01.03.2025')).toBeInTheDocument();
+    expect(screen.getByText('15.02.2025')).toBeInTheDocument();
+  });
 
-      const el = await BlogPage();
-      render(el);
+  it('renders "Read" buttons linking to post detail pages', async () => {
+    setupMocks([makePost({ slug: 'my-post' as unknown as Slug })]);
+    const el = await BlogPage();
+    render(el);
 
-      expect(screen.getByText('No posts yet.')).toBeInTheDocument();
-    });
+    const readLink = screen.getByRole('link', { name: 'Read' });
+    expect(readLink).toHaveAttribute('href', '/blog/my-post');
+  });
 
-    it('renders no BlogPostCard articles when empty', async () => {
-      vi.mocked(getBlogPosts).mockResolvedValue([]);
+  it('displays empty state message when no posts exist', async () => {
+    setupMocks([]);
+    const el = await BlogPage();
+    render(el);
+    expect(screen.getByText(/no posts yet/i)).toBeInTheDocument();
+  });
 
-      const el = await BlogPage();
-      const { container } = render(el);
-
-      const grid = container.querySelector('.grid');
-      expect(grid).toBeNull();
-    });
+  it('has static metadata with title "Blog"', () => {
+    expect(metadata.title).toBe('Blog');
+    expect(typeof metadata.description).toBe('string');
+    expect(metadata.alternates?.canonical).toBe('/blog');
   });
 });

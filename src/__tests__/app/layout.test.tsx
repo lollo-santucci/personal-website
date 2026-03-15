@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/styles/globals.css', () => ({}));
 vi.mock('@/components/SkipToContent', () => ({ default: () => null }));
-vi.mock('@/components/Header', () => ({ default: () => null }));
 vi.mock('@/components/Footer', () => ({ default: () => null }));
 vi.mock('next/font/local', () => ({
   default: () => ({ variable: '--mock-font', className: 'mock-font' }),
@@ -14,10 +13,10 @@ vi.mock('next/font/google', () => ({
 import { metadata } from '@/app/layout';
 
 describe('Root layout metadata', () => {
-  it('has default title "Lorenzo Santucci" and template "%s — Lorenzo Santucci"', () => {
+  it('has default title "Lorenzo Santucci" and template "%s | Lorenzo Santucci"', () => {
     expect(metadata.title).toEqual({
       default: 'Lorenzo Santucci',
-      template: '%s — Lorenzo Santucci',
+      template: '%s | Lorenzo Santucci',
     });
   });
 
@@ -64,13 +63,13 @@ describe('Property 6: Title template produces correct format', () => {
     expect(titleConfig.default).toBe('Lorenzo Santucci');
   });
 
-  it('any page title resolves to "{title} — Lorenzo Santucci"', () => {
+  it('any page title resolves to "{title} | Lorenzo Santucci"', () => {
     fc.assert(
       fc.property(fc.string({ minLength: 1 }), (pageTitle) => {
         // Split on %s to avoid String.replace special patterns ($&, $`, etc.)
         const [before, after] = titleConfig.template.split('%s');
         const resolved = `${before}${pageTitle}${after}`;
-        expect(resolved).toBe(`${pageTitle} — Lorenzo Santucci`);
+        expect(resolved).toBe(`${pageTitle} | Lorenzo Santucci`);
       }),
       { numRuns: 100 },
     );

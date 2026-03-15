@@ -3,6 +3,13 @@ interface ArrowUpRightProps {
 }
 
 export default function ArrowUpRight({ className }: ArrowUpRightProps) {
+  const classes = [
+    'transition-transform duration-200 motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +21,7 @@ export default function ArrowUpRight({ className }: ArrowUpRightProps) {
       strokeLinejoin="miter"
       width="16"
       height="16"
-      className={className}
+      className={classes}
       aria-hidden="true"
     >
       <path d="M4 12L12 4M12 4H5M12 4V11" />

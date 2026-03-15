@@ -6,8 +6,8 @@ import { applyBrandedCasts } from './utils/branded';
 
 const DIR_CONFIG = { dir: 'content/agents', extensions: ['.yaml', '.json'] };
 const VALIDATION = {
-  requiredFields: ['name', 'slug', 'role', 'personality', 'capabilities', 'status'],
-  arrayFields: ['capabilities'],
+  requiredFields: ['name', 'slug', 'role', 'personality', 'capabilities', 'status', 'index', 'mission', 'bestFor', 'toneOfVoice'],
+  arrayFields: ['capabilities', 'bestFor'],
 };
 const BRANDED = {
   slugFields: ['slug'],

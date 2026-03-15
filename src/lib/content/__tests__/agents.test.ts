@@ -44,8 +44,19 @@ async function setupTempAgents(): Promise<string> {
 
 const YAML_AGENT = `name: Sales Agent
 slug: sales-agent
+index: 2
 role: Sales and estimation
 personality: Professional and helpful
+mission: Help clients scope projects accurately
+bestFor:
+  - Project estimation
+  - Requirements gathering
+toneOfVoice:
+  warm: 3
+  direct: 5
+  playful: 2
+  formal: 3
+  calm: 4
 capabilities:
   - estimation
   - scheduling
@@ -56,8 +67,12 @@ portrait: /assets/agents/sales.png
 const JSON_AGENT = {
   name: 'Support Agent',
   slug: 'support-agent',
+  index: 3,
   role: 'Customer support',
   personality: 'Patient and thorough',
+  mission: 'Resolve issues quickly and thoroughly',
+  bestFor: ['Troubleshooting', 'FAQ'],
+  toneOfVoice: { warm: 4, direct: 3, playful: 2, formal: 3, calm: 5 },
   capabilities: ['troubleshooting', 'faq'],
   status: 'active',
 };

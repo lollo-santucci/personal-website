@@ -3,8 +3,6 @@ import localFont from 'next/font/local';
 import { Manrope } from 'next/font/google';
 import '@/styles/globals.css';
 import SkipToContent from '@/components/SkipToContent';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 const pixbobBold = localFont({
   src: '../../public/assets/fonts/pixbob-bold.ttf',
@@ -38,13 +36,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: 'Lorenzo Santucci',
-    template: '%s — Lorenzo Santucci',
+    template: '%s | Lorenzo Santucci',
   },
   description: defaultDescription,
   openGraph: {
     type: 'website',
     siteName: 'Lorenzo Santucci',
-    title: { default: 'Lorenzo Santucci', template: '%s — Lorenzo Santucci' },
+    title: { default: 'Lorenzo Santucci', template: '%s | Lorenzo Santucci' },
     description: defaultDescription,
   },
   alternates: { canonical: '/' },
@@ -62,11 +60,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-screen flex-col">
         <SkipToContent />
-        <Header />
-        <main id="main-content" className="mx-auto w-full max-w-4xl flex-grow px-4 md:px-6">
-          {children}
-        </main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

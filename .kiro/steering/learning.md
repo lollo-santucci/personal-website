@@ -15,6 +15,31 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### Cross-link data loading breaks all old page tests when pages are redesigned
+**What went wrong:** Redesigned pages load agents/projects/blogPosts for cross-link sections via `Promise.all`. Old test mocks only mocked the page's primary content loader (e.g., `getBlogPosts` for blog index) but not `getAgents`/`getProjects`. This caused 16 test files to fail simultaneously at the checkpoint.
+**Why:** Cross-link data is a new architectural pattern (InnerPageLayout + CrossLinks) that touches every inner page. Old tests had no awareness of it.
+**Correct approach:** When adding a cross-cutting data dependency to all pages (like cross-links), update the mock pattern in ALL page test files in the same task — or at minimum, document the required mock shape so the test update task has a clear pattern. Mock ALL content loader exports the page imports, not just the primary one.
+
+### Duplicate test files accumulated across specs (src/__tests__/app/ vs src/__tests__/pages/)
+**What went wrong:** Two sets of page tests existed: `src/__tests__/app/` (from earlier specs) and `src/__tests__/pages/` (from core-content-pages spec). Both tested the same pages with different patterns. When pages were redesigned, both sets broke.
+**Why:** Later specs created new test files in `src/__tests__/pages/` without deleting the originals in `src/__tests__/app/`.
+**Correct approach:** When creating new test files for existing pages, delete the old test files in the same task. One page = one test file. Grep for existing tests before creating new ones.
+
+### Extending a type interface breaks existing loader tests and template alignment tests
+**What went wrong:** Adding required fields to the Agent interface broke: (1) agent loader integration tests that create temp YAML fixtures without the new fields, (2) content-templates test whose metadata map didn't include the new fields, (3) template had dropped `portrait` but the TS interface still had it.
+**Why:** The type extension was done without checking all consumers — temp test fixtures, template metadata maps, and template-interface alignment tests.
+**Correct approach:** When extending a type interface with new required fields, grep for all test fixtures that create instances of that type (including temp files in integration tests) and update them. Also verify the content template and the template-alignment test metadata map stay in sync with the TS interface.
+
+### Subagent design doc leaked task-level detail and had precision errors
+**What went wrong:** Design doc for Spec 9 had: (1) detailed test file listings and per-file coverage (task-level), (2) Header described as server then client (contradictory deliberation), (3) about sidebar coupling unjustified, (4) spritesheet grid dimensions and exact shadow offsets (implementation-level), (5) P9 checked hex colors instead of hardcoded pixel values, P3 domain unbounded, P8/P10 mislabeled as PBT.
+**Why:** Subagent included implementation planning in the design doc and didn't verify correctness property precision against what they actually validate.
+**Correct approach:** Design docs state structure and decisions, not test file checklists. Resolve architectural contradictions upfront (don't show deliberation). Justify coupling with explicit tradeoff callouts. Keep visual details at design-intent level, reference Figma for exact values. Verify each correctness property's domain and check target match the stated requirement.
+
+### Subagent requirements doc too design-heavy for application spec (four rounds of fixes)
+**What went wrong:** Subagent-generated requirements for Spec 9 needed four rounds: (1) implementation details, fuzzy ACs, no priority tiers. (2) Font names/sizes, hardcoded UI strings, CSS variable prescriptions, semi-subjective ACs. (3) Solution-shaped ACs prescribing UI composition, qualitative criteria, inconsistent abstraction levels. (4) Remaining qualitative terms ("prominent size", "visually distinguished"), over-abstracted identity anchors (overlay/menu/sidebar lost RPG identity), inconsistent "is/are a design decision" phrasing.
+**Why:** Each pass removed one layer but exposed the next. Round 3 over-corrected by stripping identity-defining patterns along with prescriptive composition.
+**Correct approach:** Four-layer cleanup: mechanism → design values → composition → qualitative terms + identity calibration. Preserve identity anchors (RPG-style menu, agentdex-style sidebar) as behavioral requirements while delegating visual details. Normalize phrasing ("is a design decision" everywhere). Budget 4 review passes for large application specs.
+
 ### Namespace import (`import * as`) does NOT break Turbopack static tracing
 **What went wrong:** Tried switching `import { readFile } from 'node:fs/promises'` to `import * as fsPromises` to prevent Turbopack from tracing dynamic `readFile` calls. Warnings persisted — Turbopack traces through namespace imports too.
 **Why:** Assumed namespace imports would be opaque to Turbopack's static analysis. They aren't.
@@ -134,6 +159,10 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - **Token-utility alignment**: when a design doc claims "no hardcoded values", ensure all referenced values are actually registered as named theme tokens. Document permitted exceptions explicitly.
 - **Semantic ambiguity**: close open semantic decisions (e.g., "heading or span") with a concrete prop API in the design doc. Don't leave implementation-time choices for presentational components.
 - **Overflow/truncation**: for constrained-width components (flex rows, collection items), specify overflow handling, truncation strategy, and shrink behavior — not just layout direction and alignment.
+- **No task-level detail in design docs**: test file listings, per-file coverage tables, and code-level testing patterns (`const el = await Page()`) belong in tasks.md. Design docs keep: testing approach, PBT calibration table, test environment config.
+- **Resolve architectural contradictions upfront**: don't show deliberation ("Decision: X becomes client because..."). State the decision as fact. If a component's server/client boundary changes during design, update all references consistently.
+- **Justify coupling with tradeoff callouts**: when a design creates a content dependency (e.g., about page → agent entity), add a Key Design Decision callout explaining why, documenting the fallback, and noting the content dependency.
+- **Correctness property precision**: verify each property's input domain matches the real use case (e.g., agent index 0–999, not "any non-negative integer"). Verify the check target matches the requirement (pixel values, not hex colors). Classify file-scan checks as unit tests, not PBT.
 
 ### [Consolidated] Requirements doc authoring lessons (from site-shell, core-content-pages, agentdex-shell, design-system-foundations specs)
 - **No implementation names**: requirements describe behaviors, not component names, function names, or library names.
@@ -161,6 +190,14 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - **Metadata/SEO**: include a metadata requirement for any public-facing site. This is requirements-level, not design.
 - **Feature scope**: keep feature specs scoped to the feature. Cross-cutting audits belong in their own spec.
 - **Global assertions**: audit ALL requirements for global assertions that apply to pages outside the feature.
+- **Priority tiers**: large specs should classify requirements as Core (must-have) vs Polish (enhancement). Mark polish requirements explicitly so they can be deferred without blocking the site.
+- **Fuzzy timing/effect values**: when an AC involves timing, animation intervals, or visual effects that are design-intent rather than testable contracts, phrase as "configurable, exact value is a design decision (suggested: X)" — not as a hard AC.
+- **Subjective content quality**: replace "realistic values" or "readable sentence" with verifiable checks: no TODO markers, no lorem ipsum, no empty required fields, passes loader validation.
+- **Cross-cutting AC deduplication**: when responsive, accessibility, or structural ACs appear in both per-page requirements and cross-cutting requirements (R21/R23), keep the specific version in one place only. Per-page requirements reference the cross-cutting requirement; cross-cutting requirements don't re-list per-page details.
+- **No composition prescription**: state WHAT information must be displayed, not HOW it's composed. Decorative elements (prefixes, visual effects, component choices) are design decisions. Name Spec 8 components only when the requirement IS about adopting them (e.g., Collection_Container for indexes), not as decorative prescriptions.
+- **Qualitative → measurable or delegated**: replace "muted text", "visually dimmed", "large display size" with either measurable criteria or explicit "the specific styling is a design decision" delegation. No middle ground.
+- **Three review passes for large application specs**: round 1 catches mechanism, round 2 catches design-level values, round 3 catches composition and qualitative terms, round 4 calibrates identity anchors vs over-abstraction. Budget up to 4 passes.
+- **Abstraction floor — preserve identity anchors**: when abstracting away composition details, don't strip identity-defining behavioral patterns (RPG-style menu, agentdex-style sidebar, full-screen overlay navigation). These are product identity, not design prescription. The design doc needs anchors to build from, not a blank slate. State the distinctive pattern as a behavioral requirement; delegate only the visual details.
 
 ### [Consolidated] Spec authoring lessons (from bootstrap, content-entity-types, content-directory-templates specs)
 - **Requirements vs design boundary**: field matrices and verifiable checklists belong in requirements; placeholder values, comment wording, and formatting details are design decisions.
@@ -179,6 +216,9 @@ This file tracks mistakes, corrections, and decisions made during development. *
 - `js-yaml` is now installed as a production dependency (content-loader spec).
 
 ## Decisions Log
+
+### Requirements priority tiers: Core vs Polish
+Large specs (10+ requirements) classify each requirement as Core (must-have: layout, structure, navigation, data model, accessibility, build integrity) or Polish (enhancement: micro-interactions, animation state machines, decorative effects). Polish requirements are marked with **(Polish)** in the title and may be deferred. The site is shippable with only Core complete.
 
 ### Tailwind v4 token registration strategy: named utilities vs arbitrary values
 Colors, font families, border widths, spacing, and container widths are registered via `@theme` and produce named Tailwind utilities. Typography sizes at xl breakpoint use arbitrary values (`xl:text-[128px]`) because they're one-off Figma sizes. Collection container mobile border (`border-[6px]`) is the only other arbitrary pixel value.
@@ -255,3 +295,24 @@ Use `// @vitest-environment jsdom` at the top of each component test file instea
 
 ### Next.js 16 + Tailwind v4 as bootstrap baseline
 Next.js 16.1.6, Tailwind 4.2.1, ESLint 9.39.4 (flat config), TypeScript 5.9.3. Tailwind v4 uses CSS-based config. ESLint uses flat config.
+
+### About page sidebar loads Lorenzo's agent entity
+The about page profile sidebar displays Lorenzo's agent data (role, bestFor, mission, toneOfVoice) loaded via `getAgentBySlug('lorenzo-santucci')`. This requires a `content/agents/lorenzo-santucci.yaml` file with Agent_Extended_Fields. Content dependency, not hardcoded data.
+
+### Title template separator: pipe, not em dash
+Root layout `title.template` updated from `'%s — Lorenzo Santucci'` (em dash) to `'%s | Lorenzo Santucci'` (pipe) per Spec 9 requirements R22.
+
+### Header is a client component in Spec 9
+Header owns menu open/close state (`useState`) and passes it to MenuOverlay. This makes Header a `'use client'` component. All other new Spec 9 components are server components except TottiSprite (also client, for animation).
+
+### Cross-link data loading pattern for inner pages
+Every inner page loads cross-link data (blog posts, projects, agents) alongside its primary content via `Promise.all`. Cross-link sections show the latest 3 items from each linked section. Test mocks must include ALL content loader exports the page uses, not just the primary one. Standard mock shape: `vi.mock('@/lib/content', () => ({ getPageBySlug: vi.fn(), renderMDX: vi.fn(), getBlogPosts: vi.fn(), getProjects: vi.fn(), getAgents: vi.fn(), ... }))`.
+
+### Landing page full-height at all breakpoints (overrides R5 AC5/AC6 split)
+Lorenzo requested "a tutta altezza" without breakpoint qualifier. Implementation uses `min-h-[100dvh]` unconditionally instead of the spec's `md:`-only constraint. On mobile, `min-h` still allows scrolling when content overflows, so AC5 (scrollable on mobile) is preserved. Uses `dvh` (dynamic viewport height) to handle mobile browser chrome correctly.
+
+### "Lorenzo Santucci" text: white fill + black stroke (from Figma)
+Figma specifies `color: #FFFDFA` (white) with `-webkit-text-stroke` in black. Landing page h1: 10px stroke. Header logo: 5px stroke. Uses `text-surface` for fill color and inline `style={{ WebkitTextStrokeWidth, WebkitTextStrokeColor }}` since Tailwind has no text-stroke utilities. This is a permitted inline style exception alongside xl typography arbitrary values.
+
+### InnerPageLayout mock pattern for page tests
+Page tests mock InnerPageLayout as a simple pass-through: `({ title, children }) => <div><h1>{title}</h1><div>{children}</div></div>`. This lets tests verify page-specific content without testing the shared layout structure. Same pattern for Breadcrumb, ChatSection, ProjectMetadataPanel mocks.
