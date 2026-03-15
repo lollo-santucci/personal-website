@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import TransitionLink from '@/components/TransitionLink';
 import type { Project } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
@@ -10,7 +10,7 @@ export interface ProjectCardProps {
 export default function ProjectCard({ project }: ProjectCardProps) {
   return (
     <article className="flex flex-col">
-      <Link href={`/projects/${project.slug}`} className="group block">
+      <TransitionLink href={`/projects/${project.slug}`} className="group block">
         {/* Screenshot area with offset shadow */}
         <div className="relative mb-4">
           {/* Offset shadow */}
@@ -55,7 +55,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             {project.description}
           </p>
         )}
-      </Link>
+      </TransitionLink>
     </article>
   );
 }

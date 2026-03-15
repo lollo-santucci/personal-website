@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
+import TransitionLink from '@/components/TransitionLink';
 import { usePathname } from 'next/navigation';
 import RPGSelector from '@/components/ui/RPGSelector';
 
@@ -126,13 +126,13 @@ export default function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlay
         <ul className="flex flex-col gap-6 md:gap-8">
           {MENU_LINKS.map(({ href, label }) => (
             <li key={href}>
-              <Link
+              <TransitionLink
                 href={href}
                 className="flex items-center gap-3 font-pixbob-regular text-3xl text-text md:text-4xl xl:text-[56px]"
               >
                 <RPGSelector />
                 <span>{label}</span>
-              </Link>
+              </TransitionLink>
             </li>
           ))}
         </ul>

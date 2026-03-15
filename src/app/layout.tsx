@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import { Manrope } from 'next/font/google';
 import '@/styles/globals.css';
 import SkipToContent from '@/components/SkipToContent';
+import { TransitionProvider } from '@/lib/transition/transition-context';
 
 const pixbobBold = localFont({
   src: '../../public/assets/fonts/pixbob-bold.ttf',
@@ -60,7 +61,9 @@ export default function RootLayout({
     >
       <body className="flex min-h-screen flex-col">
         <SkipToContent />
-        {children}
+        <TransitionProvider>
+          {children}
+        </TransitionProvider>
       </body>
     </html>
   );

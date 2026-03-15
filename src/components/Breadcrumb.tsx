@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import TransitionLink from '@/components/TransitionLink';
 
 interface BreadcrumbProps {
   items: Array<{ label: string; href: string }>;
@@ -11,9 +11,9 @@ export default function Breadcrumb({ items, current }: BreadcrumbProps) {
       <ol className="flex flex-wrap items-center gap-2 font-pixbob-regular text-base md:text-lg xl:text-[28px]">
         {items.map((item) => (
           <li key={item.href} className="flex items-center gap-2">
-            <Link href={item.href} className="text-text-muted hover:text-text">
+            <TransitionLink href={item.href} className="text-text-muted hover:text-text">
               {item.label}
-            </Link>
+            </TransitionLink>
             <span className="text-text-muted" aria-hidden="true">
               →
             </span>

@@ -1,4 +1,5 @@
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
+import TransitionLink from '@/components/TransitionLink';
 
 interface CrossLinkItem {
   label: string;
@@ -30,23 +31,23 @@ export default function CrossLinks({ sections, className }: CrossLinksProps) {
     >
       {sections.map((section) => (
         <div key={section.href}>
-          <a
+          <TransitionLink
             href={section.href}
             className="inline-flex items-center gap-2 font-pixbob-bold text-xl md:text-2xl xl:text-[48px] mb-4 md:mb-6"
           >
             {section.title}
             <ArrowUpRight className="size-[1em]" />
-          </a>
+          </TransitionLink>
           <div className="flex flex-col gap-3 md:gap-4">
             {section.items.map((item) => (
-              <a
+              <TransitionLink
                 key={item.href}
                 href={item.href}
                 className="inline-flex items-center justify-between gap-2 border-standard border-black bg-surface font-pixbob-regular text-lg md:text-xl xl:text-[36px] px-4 py-2 md:px-5 md:py-3"
               >
                 {item.label}
                 <ArrowUpRight className="size-[1em] flex-shrink-0" />
-              </a>
+              </TransitionLink>
             ))}
           </div>
         </div>

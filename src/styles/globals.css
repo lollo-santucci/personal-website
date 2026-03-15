@@ -103,4 +103,42 @@
   .pixel-art {
     image-rendering: pixelated;
   }
+
+  .landing-title-stroke {
+    -webkit-text-stroke-width: 14px;
+    -webkit-text-stroke-color: var(--black);
+    paint-order: stroke fill;
+  }
+
+  @media (min-width: 768px) {
+    .landing-title-stroke {
+      -webkit-text-stroke-width: 14px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .landing-title-stroke {
+      -webkit-text-stroke-width: 20px;
+    }
+  }
+}
+
+@keyframes menu-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@utility animate-menu-pulse {
+  animation: menu-pulse 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-menu-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
 }

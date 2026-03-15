@@ -6,20 +6,20 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // State machine types & pure transition function (exported for PBT testing)
 // ---------------------------------------------------------------------------
 
-export type TottiState = 'sitting' | 'barking' | 'sleeping';
+export type TottiState = 'sitting' | 'playful' | 'sleeping';
 export type TottiEvent =
-  | 'bark_timer'
+  | 'playful_timer'
   | 'inactivity_timeout'
-  | 'bark_complete'
+  | 'playful_complete'
   | 'user_interaction';
 
 export function tottiTransition(
   state: TottiState,
   event: TottiEvent,
 ): TottiState {
-  if (state === 'sitting' && event === 'bark_timer') return 'barking';
+  if (state === 'sitting' && event === 'playful_timer') return 'playful';
   if (state === 'sitting' && event === 'inactivity_timeout') return 'sleeping';
-  if (state === 'barking' && event === 'bark_complete') return 'sitting';
+  if (state === 'playful' && event === 'playful_complete') return 'sitting';
   if (state === 'sleeping' && event === 'user_interaction') return 'sitting';
   return state;
 }
@@ -30,8 +30,17 @@ export function tottiTransition(
 
 const SPRITE_BASE = '/assets/characters/totti/spritesheets';
 const FRAME_SIZE = 32; // px per frame in the spritesheet
-const SCALE = 4; // display at 4× → 128px
-const DISPLAY_SIZE = FRAME_SIZE * SCALE; // 128px
+const SCALE = 16;
+const DISPLAY_SIZE = FRAME_SIZE * SCALE; // 512px full frame
+
+// Crop: trim empty space around Totti so the layout box is tight.
+// Values are in original sprite pixels (before scaling).
+const CROP_TOP = 7;
+const CROP_BOTTOM = 1;
+const CROP_LEFT = 3;
+const CROP_RIGHT = 3;
+const VISUAL_WIDTH = (FRAME_SIZE - CROP_LEFT - CROP_RIGHT) * SCALE;   // ~352px
+const VISUAL_HEIGHT = (FRAME_SIZE - CROP_TOP - CROP_BOTTOM) * SCALE;  // ~384px
 
 // Sitting spritesheet: 160×352 → 5 cols × 11 rows
 // Use row 4 (0-indexed) for front-facing tail wagging — 5 frames
@@ -40,18 +49,18 @@ const SITTING = {
   sheetWidth: 160,
   sheetHeight: 352,
   cols: 5,
-  row: 4, // front-facing tail wagging row
-  frames: 5,
+  row: 10, // right-facing tail wagging row
+  frames: 4,
 } as const;
 
-// Playful/barking spritesheet: 128×128 → 4 cols × 4 rows
-// Use row 0 (0-indexed) for front-facing playful/barking — 4 frames
-const BARKING = {
+// Playful/playful spritesheet: 128×128 → 4 cols × 4 rows
+// Use row 0 (0-indexed) for front-facing playful/playful — 4 frames
+const PLAYFUL = {
   sheet: `${SPRITE_BASE}/BROWN_DOG_PLAYFUL.png`,
   sheetWidth: 128,
   sheetHeight: 128,
   cols: 4,
-  row: 0, // front-facing playful row
+  row: 3, // right-facing playful row
   frames: 4,
 } as const;
 
@@ -62,11 +71,11 @@ const SLEEPING = {
   sheetWidth: 128,
   sheetHeight: 64,
   cols: 4,
-  row: 0, // sleeping row
+  row: 1, // right-facing sleeping row
   frames: 4,
 } as const;
 
-// Static frame for reduced-motion: front-facing from sitting sheet, col 0 row 4
+// Static frame for reduced-motion: right-facing from sitting sheet, col 0 row 5
 const STATIC_FRAME = {
   sheet: SITTING.sheet,
   col: 0,
@@ -74,8 +83,9 @@ const STATIC_FRAME = {
 } as const;
 
 // Timing constants
-const BARK_MIN_INTERVAL = 8000; // ms
-const BARK_MAX_INTERVAL = 15000; // ms
+const PLAYFUL_MIN_INTERVAL = 8000; // ms
+const PLAYFUL_MAX_INTERVAL = 15000; // ms
+const PLAYFUL_LOOPS = 2; // playful animation repeats this many times
 const INACTIVITY_TIMEOUT = 10000; // ms
 const FRAME_DURATION_MS = 200; // ~5 FPS (pixel-art feel)
 
@@ -133,7 +143,7 @@ function injectKeyframes(): void {
   // Each animation moves background-position-x across the frames in the row.
   // steps(N-1) creates N distinct frames (the initial position is frame 0).
   const sittingEnd = (SITTING.frames - 1) * DISPLAY_SIZE;
-  const barkingEnd = (BARKING.frames - 1) * DISPLAY_SIZE;
+  const playfulEnd = (PLAYFUL.frames - 1) * DISPLAY_SIZE;
   const sleepingEnd = (SLEEPING.frames - 1) * DISPLAY_SIZE;
 
   style.textContent = `
@@ -141,9 +151,9 @@ function injectKeyframes(): void {
       from { background-position-x: 0px; }
       to { background-position-x: -${sittingEnd}px; }
     }
-    @keyframes ${getKeyframeName('barking')} {
+    @keyframes ${getKeyframeName('playful')} {
       from { background-position-x: 0px; }
-      to { background-position-x: -${barkingEnd}px; }
+      to { background-position-x: -${playfulEnd}px; }
     }
     @keyframes ${getKeyframeName('sleeping')} {
       from { background-position-x: 0px; }
@@ -162,9 +172,9 @@ export default function TottiSprite() {
   const [state, setState] = useState<TottiState>('sitting');
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
-  const barkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playfulTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const barkAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playfulAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Detect prefers-reduced-motion
   useEffect(() => {
@@ -184,12 +194,12 @@ export default function TottiSprite() {
   }, [prefersReducedMotion]);
 
   // -------------------------------------------------------------------------
-  // Helper: random bark interval
+  // Helper: random playful interval
   // -------------------------------------------------------------------------
-  const randomBarkDelay = useCallback(
+  const randomPlayfulDelay = useCallback(
     () =>
-      BARK_MIN_INTERVAL +
-      Math.random() * (BARK_MAX_INTERVAL - BARK_MIN_INTERVAL),
+      PLAYFUL_MIN_INTERVAL +
+      Math.random() * (PLAYFUL_MAX_INTERVAL - PLAYFUL_MIN_INTERVAL),
     [],
   );
 
@@ -197,17 +207,17 @@ export default function TottiSprite() {
   // Clear all timers
   // -------------------------------------------------------------------------
   const clearAllTimers = useCallback(() => {
-    if (barkTimerRef.current) {
-      clearTimeout(barkTimerRef.current);
-      barkTimerRef.current = null;
+    if (playfulTimerRef.current) {
+      clearTimeout(playfulTimerRef.current);
+      playfulTimerRef.current = null;
     }
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
       inactivityTimerRef.current = null;
     }
-    if (barkAnimTimerRef.current) {
-      clearTimeout(barkAnimTimerRef.current);
-      barkAnimTimerRef.current = null;
+    if (playfulAnimTimerRef.current) {
+      clearTimeout(playfulAnimTimerRef.current);
+      playfulAnimTimerRef.current = null;
     }
   }, []);
 
@@ -215,16 +225,16 @@ export default function TottiSprite() {
   // Start timers for the sitting state
   // -------------------------------------------------------------------------
   const startSittingTimers = useCallback(() => {
-    // Schedule a random bark
-    barkTimerRef.current = setTimeout(() => {
-      setState((prev) => tottiTransition(prev, 'bark_timer'));
-    }, randomBarkDelay());
+    // Schedule a random playful moment
+    playfulTimerRef.current = setTimeout(() => {
+      setState((prev) => tottiTransition(prev, 'playful_timer'));
+    }, randomPlayfulDelay());
 
     // Schedule inactivity → sleeping
     inactivityTimerRef.current = setTimeout(() => {
       setState((prev) => tottiTransition(prev, 'inactivity_timeout'));
     }, INACTIVITY_TIMEOUT);
-  }, [randomBarkDelay]);
+  }, [randomPlayfulDelay]);
 
   // -------------------------------------------------------------------------
   // Handle user interaction (wake from sleeping, reset inactivity)
@@ -256,12 +266,12 @@ export default function TottiSprite() {
 
     if (state === 'sitting') {
       startSittingTimers();
-    } else if (state === 'barking') {
-      // Barking animation completes after all frames play once
-      const barkDuration = BARKING.frames * FRAME_DURATION_MS;
-      barkAnimTimerRef.current = setTimeout(() => {
-        setState((prev) => tottiTransition(prev, 'bark_complete'));
-      }, barkDuration);
+    } else if (state === 'playful') {
+      // Playful animation completes after all frames play twice
+      const playfulDuration = PLAYFUL.frames * FRAME_DURATION_MS * PLAYFUL_LOOPS;
+      playfulAnimTimerRef.current = setTimeout(() => {
+        setState((prev) => tottiTransition(prev, 'playful_complete'));
+      }, playfulDuration);
     }
     // sleeping: no timers — waits for user interaction
 
@@ -288,38 +298,48 @@ export default function TottiSprite() {
   // Render
   // -------------------------------------------------------------------------
 
-  // Reduced motion: static front-facing frame
+  // Wrapper style: tight box around Totti, sprite offset inside via negative margin
+  const wrapperStyle: React.CSSProperties = {
+    width: VISUAL_WIDTH,
+    height: VISUAL_HEIGHT,
+    overflow: 'hidden',
+  };
+
+  const spriteOffset: React.CSSProperties = {
+    marginTop: -(CROP_TOP * SCALE),
+    marginLeft: -(CROP_LEFT * SCALE),
+  };
+
+  // Reduced motion: static right-facing frame
   if (prefersReducedMotion) {
     return (
-      <div
-        role="img"
-        aria-label="Totti the companion dog"
-        className="pixel-art mx-auto"
-        style={buildStaticStyle()}
-      />
+      <div className="mx-auto" style={wrapperStyle} role="img" aria-label="Totti the companion dog">
+        <div
+          className="pixel-art"
+          style={{ ...buildStaticStyle(), ...spriteOffset }}
+        />
+      </div>
     );
   }
 
   // Animated: pick config based on current state
   const config =
-    state === 'barking' ? BARKING : state === 'sleeping' ? SLEEPING : SITTING;
+    state === 'playful' ? PLAYFUL : state === 'sleeping' ? SLEEPING : SITTING;
 
   const animationName = getKeyframeName(state);
   const totalDuration = config.frames * FRAME_DURATION_MS;
-  // For sitting & sleeping: loop. For barking: play once (timer handles transition).
-  const iterationCount = state === 'barking' ? 1 : 'infinite';
+  // For sitting & sleeping: loop infinitely. For playful: play twice then transition.
+  const iterationCount = state === 'playful' ? PLAYFUL_LOOPS : 'infinite';
 
   const spriteStyle: React.CSSProperties = {
     ...buildSpriteStyle(config),
+    ...spriteOffset,
     animation: `${animationName} ${totalDuration}ms steps(${config.frames - 1}) ${iterationCount}`,
   };
 
   return (
-    <div
-      role="img"
-      aria-label="Totti the companion dog"
-      className="pixel-art mx-auto"
-      style={spriteStyle}
-    />
+    <div className="mx-auto" style={wrapperStyle} role="img" aria-label="Totti the companion dog">
+      <div className="pixel-art" style={spriteStyle} />
+    </div>
   );
 }
