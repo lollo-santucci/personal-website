@@ -13,7 +13,7 @@ describe('NAV_LINKS', () => {
       { href: '/about', label: 'About' },
       { href: '/projects', label: 'Projects' },
       { href: '/blog', label: 'Blog' },
-      { href: '/office', label: 'Office' },
+      { href: '/agentdex', label: 'Agentdex' },
       { href: '/contact', label: 'Contact' },
     ];
     expect(NAV_LINKS).toEqual(expected);
@@ -43,7 +43,7 @@ describe('isActiveLink', () => {
     it('returns true when pathname equals href', () => {
       expect(isActiveLink('/projects', '/projects')).toBe(true);
       expect(isActiveLink('/blog', '/blog')).toBe(true);
-      expect(isActiveLink('/office', '/office')).toBe(true);
+      expect(isActiveLink('/agentdex', '/agentdex')).toBe(true);
     });
   });
 
@@ -51,7 +51,7 @@ describe('isActiveLink', () => {
     it('returns true when pathname starts with href + "/"', () => {
       expect(isActiveLink('/projects', '/projects/foo')).toBe(true);
       expect(isActiveLink('/blog', '/blog/my-post')).toBe(true);
-      expect(isActiveLink('/office', '/office/sales-agent')).toBe(true);
+      expect(isActiveLink('/agentdex', '/agentdex/sales-agent')).toBe(true);
     });
 
     it('returns true for deeply nested sub-paths', () => {
@@ -63,7 +63,7 @@ describe('isActiveLink', () => {
     it('returns false for unrelated paths', () => {
       expect(isActiveLink('/blog', '/about')).toBe(false);
       expect(isActiveLink('/projects', '/contact')).toBe(false);
-      expect(isActiveLink('/office', '/blog')).toBe(false);
+      expect(isActiveLink('/agentdex', '/blog')).toBe(false);
     });
 
     it('returns false for partial prefix without slash boundary', () => {

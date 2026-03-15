@@ -8,7 +8,7 @@ export const NAV_LINKS: readonly NavLink[] = [
   { href: '/about', label: 'About' },
   { href: '/projects', label: 'Projects' },
   { href: '/blog', label: 'Blog' },
-  { href: '/office', label: 'Office' },
+  { href: '/agentdex', label: 'Agentdex' },
   { href: '/contact', label: 'Contact' },
 ];
 

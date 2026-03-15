@@ -33,7 +33,7 @@ describe('HeaderNav', () => {
 
   it('renders all 6 navigation links in the desktop nav', () => {
     render(<HeaderNav />);
-    const expectedLabels = ['Home', 'About', 'Projects', 'Blog', 'Office', 'Contact'];
+    const expectedLabels = ['Home', 'About', 'Projects', 'Blog', 'Agentdex', 'Contact'];
     for (const label of expectedLabels) {
       const links = screen.getAllByRole('link', { name: label });
       // Desktop nav renders links; mobile menu is hidden initially so only desktop set exists

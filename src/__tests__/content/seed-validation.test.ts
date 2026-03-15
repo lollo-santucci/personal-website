@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest';
 import { getPages, getPageBySlug } from '@/lib/content/pages';
 import { getProjects } from '@/lib/content/projects';
 import { getBlogPosts } from '@/lib/content/blog';
+import { getAgents } from '@/lib/content/agents';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readdirSync } from 'node:fs';
@@ -28,6 +29,7 @@ const CONTENT_DIRS = [
   { dir: 'content/pages', ext: '.mdx' },
   { dir: 'content/projects', ext: '.mdx' },
   { dir: 'content/blog', ext: '.mdx' },
+  { dir: 'content/agents', ext: '.yaml' },
 ];
 
 /**
@@ -183,6 +185,43 @@ describe('P15: Seed content contains no placeholder text', () => {
         expect(
           lower.includes(pattern),
           `Found "${pattern}" in ${label}`,
+        ).toBe(false);
+      }
+    }
+  });
+});
+
+
+/**
+ * Agent seed content validation.
+ * Validates: Requirements 5.1, 5.2, 5.5, 5.6
+ */
+describe('Agent seed content validation', () => {
+  it('contains at least 2 agents', async () => {
+    const agents = await getAgents();
+    expect(agents.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('contains at least two distinct agent statuses', async () => {
+    const agents = await getAgents();
+    const statuses = new Set(agents.map((a) => a.status));
+    expect(statuses.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('at least one agent has multi-line personality (contains \\n)', async () => {
+    const agents = await getAgents();
+    const hasMultiLine = agents.some((a) => a.personality.includes('\n'));
+    expect(hasMultiLine).toBe(true);
+  });
+
+  it('no agent contains placeholder text', async () => {
+    const agents = await getAgents();
+    for (const agent of agents) {
+      const text = `${agent.name} ${agent.role} ${agent.personality} ${agent.capabilities.join(' ')}`.toLowerCase();
+      for (const pattern of PLACEHOLDER_PATTERNS) {
+        expect(
+          text.includes(pattern),
+          `Found "${pattern}" in agent:${agent.slug}`,
         ).toBe(false);
       }
     }

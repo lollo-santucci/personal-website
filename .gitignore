@@ -42,5 +42,6 @@ next-env.d.ts
 
 # project-specific
 context/
+tools/
 CLAUDE.md
 .claude/

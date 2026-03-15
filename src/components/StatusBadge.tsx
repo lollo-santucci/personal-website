@@ -1,4 +1,10 @@
-type Status = 'completed' | 'in-progress' | 'ongoing';
+export type Status =
+  | 'completed'
+  | 'in-progress'
+  | 'ongoing'
+  | 'active'
+  | 'coming-soon'
+  | 'experimental';
 
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
   completed: {
@@ -12,6 +18,18 @@ const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
   ongoing: {
     label: 'Ongoing',
     className: 'bg-blue-100 text-blue-800',
+  },
+  active: {
+    label: 'Active',
+    className: 'bg-emerald-100 text-emerald-800',
+  },
+  'coming-soon': {
+    label: 'Coming Soon',
+    className: 'bg-purple-100 text-purple-800',
+  },
+  experimental: {
+    label: 'Experimental',
+    className: 'bg-orange-100 text-orange-800',
   },
 };
 

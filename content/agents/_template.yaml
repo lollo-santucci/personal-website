@@ -1,14 +1,26 @@
 # Agent Template
 # Copy this file, rename to your-slug.yaml, and fill in the fields.
+# Assets go in public/assets/agents/{slug}/spritesheets/character_spritesheet.png
 
 name: "Agent Name" # REQUIRED — string
 slug: "agent-slug" # REQUIRED — Slug (kebab-case, URL-safe)
+index: 1 # REQUIRED — number (display order in agentdex: 001, 002, ...)
 role: "Brief role description" # REQUIRED — string
 personality: "Personality description" # REQUIRED — string
+mission: "What this agent does, in one sentence" # REQUIRED — string (displayed in bordered box on profile)
+bestFor: # REQUIRED — string[] (displayed with > prefix on profile)
+  - "Use case one"
+  - "Use case two"
+toneOfVoice: # REQUIRED — object (stat bars on profile, values 1-5)
+  warm: 4
+  direct: 3
+  playful: 4
+  formal: 2
+  calm: 5
 capabilities: # REQUIRED — string[]
   - "Capability one"
 status: "active" # REQUIRED — enum: "active" | "coming-soon" | "experimental"
-portrait: "/assets/agents/agent-slug.png" # OPTIONAL — AssetPath (file path to pixel-art portrait)
+greeting: "Hello, curious about my work?" # OPTIONAL — string (chat placeholder message)
 world: # OPTIONAL — object (world presence in play view)
   location: "ufficio" # REQUIRED (if world) — Slug (location slug, kebab-case, Italian)
   sprite: "agent-slug-sprite" # OPTIONAL — AssetPath (sprite reference)
