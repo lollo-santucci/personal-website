@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+'use client';
+
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface StatBarProps {
   label: string;
@@ -18,19 +20,64 @@ function clampValue(value: number): number {
 
 export default function StatBar({ label, value, className }: StatBarProps) {
   const clamped = clampValue(value);
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mql.matches) {
+      setPrefersReducedMotion(true);
+      setIsVisible(true);
+      return;
+    }
+
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.3 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const rectangles = Array.from({ length: 5 }, (_, i) => {
     const isFilled = i < clamped;
+    const fillStyle: React.CSSProperties =
+      isFilled && !prefersReducedMotion
+        ? {
+            transformOrigin: 'bottom',
+            transform: isVisible ? 'scaleY(1)' : 'scaleY(0)',
+            transition: `transform 300ms ease-out ${i * 100}ms`,
+          }
+        : {};
+
     return (
       <div
         key={i}
-        className={`w-8 h-2.5 md:w-10 md:h-3 border-2 border-black ${isFilled ? 'bg-lime' : 'bg-surface'}`}
-      />
+        className="relative w-8 h-2.5 md:w-10 md:h-3 border-3 border-black bg-surface"
+      >
+        {isFilled && (
+          <div
+            className="absolute inset-0 bg-lime"
+            style={fillStyle}
+          />
+        )}
+      </div>
     );
   });
 
   return (
     <div
+      ref={ref}
       role="img"
       aria-label={`${label}: ${clamped} out of 5`}
       className={['flex flex-col items-center', className].filter(Boolean).join(' ')}

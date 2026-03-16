@@ -19,12 +19,12 @@ export default function LogoMarquee({ logos }: LogoMarqueeProps) {
   const repeated = [...logos, ...logos, ...logos, ...logos];
 
   return (
-    <div className="relative w-full overflow-hidden motion-reduce:overflow-x-auto">
+    <div className="group relative w-full overflow-hidden motion-reduce:overflow-x-auto">
       {/* Fade edges */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-surface to-transparent md:w-24" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-surface to-transparent md:w-24" />
 
-      <div className="flex w-max animate-marquee items-center gap-12 py-4 md:gap-32 motion-reduce:animate-none">
+      <div className="flex w-max animate-marquee items-center gap-12 py-4 md:gap-32 motion-reduce:animate-none group-hover:[animation-play-state:paused]">
         {repeated.map((logo, i) => (
           <a
             key={`${logo.alt}-${String(i)}`}

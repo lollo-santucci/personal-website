@@ -53,7 +53,7 @@ export default function Button(props: ButtonProps) {
   } = props;
 
   const classes = [
-    'group inline-flex items-center gap-2 border-standard border-black outline outline-3 outline-text font-pixbob-regular transition-colors duration-200 motion-reduce:transition-none',
+    'group inline-flex items-center gap-2 border-standard border-black outline outline-3 outline-text font-pixbob-regular transition-all duration-200 motion-reduce:transition-none hover:-translate-y-0.5 active:translate-y-0',
     variantClasses[variant],
     sizeClasses[size],
     className,

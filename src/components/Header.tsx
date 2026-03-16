@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import MenuOverlay from '@/components/MenuOverlay';
 import TransitionLink from '@/components/TransitionLink';
+import TextScramble from '@/components/TextScramble';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,9 +29,9 @@ export default function Header() {
           onClick={() => setIsMenuOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={isMenuOpen}
-          className="font-pixbob-lite text-2xl text-text md:text-3xl xl:text-[48px]"
+          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px]"
         >
-          MENU
+          <TextScramble text="MENU" scrambleOnHover />
         </button>
       </div>
       <MenuOverlay

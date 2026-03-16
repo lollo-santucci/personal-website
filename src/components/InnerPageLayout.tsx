@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import CTABanner from '@/components/ui/CTABanner';
 import CrossLinks from '@/components/ui/CrossLinks';
+import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 interface InnerPageLayoutProps {
@@ -43,17 +44,21 @@ export default function InnerPageLayout({
 
       {afterContent}
 
-      <div className="px-6 md:px-12 xl:px-page-px">
-        <div className="mx-auto max-w-content-max xl:px-[100px]">
-          <CTABanner headline={ctaHeadline} body={ctaBody} href="/contact" />
+      <Reveal>
+        <div className="px-6 md:px-12 xl:px-page-px">
+          <div className="mx-auto max-w-content-max xl:px-[100px]">
+            <CTABanner headline={ctaHeadline} body={ctaBody} href="/contact" />
+          </div>
         </div>
-      </div>
+      </Reveal>
 
-      <div className="px-6 md:px-12 xl:px-page-px">
-        <div className="mx-auto max-w-content-max">
-          <CrossLinks sections={crossLinkSections} />
+      <Reveal delay={100}>
+        <div className="px-6 md:px-12 xl:px-page-px">
+          <div className="mx-auto max-w-content-max">
+            <CrossLinks sections={crossLinkSections} />
+          </div>
         </div>
-      </div>
+      </Reveal>
     </div>
   );
 }

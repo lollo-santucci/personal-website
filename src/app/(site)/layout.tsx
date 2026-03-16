@@ -1,4 +1,5 @@
 import Footer from '@/components/Footer';
+import PageEntrance from '@/components/PageEntrance';
 
 export default function SiteLayout({
   children,
@@ -8,7 +9,7 @@ export default function SiteLayout({
   return (
     <>
       <main id="main-content" className="flex-grow">
-        {children}
+        <PageEntrance>{children}</PageEntrance>
       </main>
       <Footer />
     </>

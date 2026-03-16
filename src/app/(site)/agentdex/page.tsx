@@ -8,6 +8,7 @@ import CollectionRow from '@/components/ui/CollectionRow';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import RPGSelector from '@/components/ui/RPGSelector';
+import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/agentdex' },
 };
 
-/** Frame dimensions for agent spritesheets (32×64 per frame). */
+/** Frame dimensions for agent spritesheets (32x64 per frame). */
 const FRAME_W = 32;
 const FRAME_H = 64;
 /** Front-facing idle frame: column 3, row 0. */
@@ -106,32 +107,33 @@ export default async function AgentdexPage() {
       {sortedAgents.length > 0 ? (
         <CollectionContainer>
           <div className="flex flex-col gap-3 md:gap-4">
-            {sortedAgents.map((agent) => (
-              <CollectionRow
-                key={String(agent.slug)}
-                action={
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    href={`/agentdex/${String(agent.slug)}`}
-                  >
-                    Meet
-                  </Button>
-                }
-              >
-                <div className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
-                  <AgentPortrait
-                    slug={String(agent.slug)}
-                    name={agent.name}
-                  />
-                  <span className="shrink-0 text-text-muted">
-                    {formatAgentIndex(agent.index)}
-                  </span>
-                  <RPGSelector className="shrink-0" />
-                  <span className="truncate">{agent.name}</span>
-                  {statusBadge(agent.status)}
-                </div>
-              </CollectionRow>
+            {sortedAgents.map((agent, index) => (
+              <Reveal key={String(agent.slug)} delay={index * 80}>
+                <CollectionRow
+                  action={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      href={`/agentdex/${String(agent.slug)}`}
+                    >
+                      Meet
+                    </Button>
+                  }
+                >
+                  <div className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
+                    <AgentPortrait
+                      slug={String(agent.slug)}
+                      name={agent.name}
+                    />
+                    <span className="shrink-0 text-text-muted">
+                      {formatAgentIndex(agent.index)}
+                    </span>
+                    <RPGSelector className="shrink-0" />
+                    <span className="truncate">{agent.name}</span>
+                    {statusBadge(agent.status)}
+                  </div>
+                </CollectionRow>
+              </Reveal>
             ))}
           </div>
         </CollectionContainer>

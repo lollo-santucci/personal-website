@@ -1,4 +1,5 @@
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
+import TransitionLink from '@/components/TransitionLink';
 
 interface CTABannerProps {
   headline: string;
@@ -9,11 +10,12 @@ interface CTABannerProps {
 
 export default function CTABanner({ headline, body, href, className }: CTABannerProps) {
   return (
-    <a
+    <TransitionLink
       href={href}
       className={[
         'group block bg-secondary border-standard border-black outline outline-3 outline-text text-surface',
         'px-6 md:px-8 xl:px-[40px] py-4 md:py-5 xl:py-[26px] xl:my-[40px]',
+        'transition-transform duration-200 motion-reduce:transition-none',
         className,
       ]
         .filter(Boolean)
@@ -30,6 +32,6 @@ export default function CTABanner({ headline, body, href, className }: CTABanner
         </div>
         <ArrowUpRight className="size-6 md:size-8 xl:size-10 flex-shrink-0" />
       </div>
-    </a>
+    </TransitionLink>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTransitionRouter } from '@/lib/transition/use-transition-router';
+import TextScramble from '@/components/TextScramble';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -125,9 +126,9 @@ export default function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlay
           type="button"
           onClick={onClose}
           aria-label="Close navigation menu"
-          className="font-pixbob-lite text-2xl text-text md:text-3xl xl:text-[48px]"
+          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px]"
         >
-          CLOSE
+          <TextScramble text="CLOSE" scrambleOnMount scrambleOnHover />
         </button>
       </div>
 

@@ -41,7 +41,7 @@ export default function Home() {
       </div>
 
       <div className="px-6 md:px-12 xl:px-page-px">
-        <Footer />
+        <Footer variant="minimal" />
       </div>
     </div>
   );

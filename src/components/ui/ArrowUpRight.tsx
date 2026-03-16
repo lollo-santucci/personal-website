@@ -4,7 +4,7 @@ interface ArrowUpRightProps {
 
 export default function ArrowUpRight({ className }: ArrowUpRightProps) {
   const classes = [
-    'transition-transform duration-200 motion-reduce:transition-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5',
+    'transition-transform duration-200 motion-reduce:transition-none group-hover:translate-x-1 group-hover:-translate-y-1',
     className,
   ]
     .filter(Boolean)

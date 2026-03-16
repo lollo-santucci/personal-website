@@ -3,6 +3,7 @@ import { getProjects, getBlogPosts, getAgents } from '@/lib/content';
 import { sortAgentsByIndex } from '@/lib/content/agent-utils';
 import InnerPageLayout from '@/components/InnerPageLayout';
 import ProjectCard from '@/components/ProjectCard';
+import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 export const metadata: Metadata = {
@@ -49,8 +50,10 @@ export default async function ProjectsPage() {
     >
       {projects.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-          {projects.map((project) => (
-            <ProjectCard key={String(project.slug)} project={project} />
+          {projects.map((project, index) => (
+            <Reveal key={String(project.slug)} delay={index * 80}>
+              <ProjectCard project={project} />
+            </Reveal>
           ))}
         </div>
       ) : (

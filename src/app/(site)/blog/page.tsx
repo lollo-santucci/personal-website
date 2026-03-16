@@ -8,6 +8,7 @@ import CollectionRow from '@/components/ui/CollectionRow';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import RPGSelector from '@/components/ui/RPGSelector';
+import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 export const metadata: Metadata = {
@@ -55,32 +56,33 @@ export default async function BlogPage() {
       {posts.length > 0 ? (
         <CollectionContainer>
           <div className="flex flex-col gap-3 md:gap-4">
-            {posts.map((post) => (
-              <CollectionRow
-                key={String(post.slug)}
-                action={
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    href={`/blog/${String(post.slug)}`}
-                  >
-                    Read
-                  </Button>
-                }
-              >
-                <div className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
-                  <span className="shrink-0 text-text-muted">
-                    {formatDateDDMMYYYY(post.date)}
-                  </span>
-                  <RPGSelector className="shrink-0" />
-                  <span className="truncate">{post.title}</span>
-                  {isRecentPost(post.date) && (
-                    <Badge variant="accent" className="shrink-0">
-                      New
-                    </Badge>
-                  )}
-                </div>
-              </CollectionRow>
+            {posts.map((post, index) => (
+              <Reveal key={String(post.slug)} delay={index * 80}>
+                <CollectionRow
+                  action={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      href={`/blog/${String(post.slug)}`}
+                    >
+                      Read
+                    </Button>
+                  }
+                >
+                  <div className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
+                    <span className="shrink-0 text-text-muted">
+                      {formatDateDDMMYYYY(post.date)}
+                    </span>
+                    <RPGSelector className="shrink-0" />
+                    <span className="truncate">{post.title}</span>
+                    {isRecentPost(post.date) && (
+                      <Badge variant="accent" className="shrink-0">
+                        New
+                      </Badge>
+                    )}
+                  </div>
+                </CollectionRow>
+              </Reveal>
             ))}
           </div>
         </CollectionContainer>
