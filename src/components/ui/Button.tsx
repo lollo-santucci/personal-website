@@ -16,17 +16,19 @@ interface ButtonBaseProps {
   className?: string;
 }
 
-type ButtonAsAnchor = ButtonBaseProps & { href: string } & Omit<
+type ButtonAsAnchor = ButtonBaseProps & { href: string; as?: never } & Omit<
   ComponentPropsWithoutRef<'a'>,
-  keyof ButtonBaseProps | 'href'
+  keyof ButtonBaseProps | 'href' | 'as'
 >;
 
-type ButtonAsButton = ButtonBaseProps & { href?: undefined } & Omit<
+type ButtonAsSpan = ButtonBaseProps & { as: 'span'; href?: never };
+
+type ButtonAsButton = ButtonBaseProps & { href?: never; as?: never } & Omit<
   ComponentPropsWithoutRef<'button'>,
-  keyof ButtonBaseProps
+  keyof ButtonBaseProps | 'as'
 >;
 
-export type ButtonProps = ButtonAsAnchor | ButtonAsButton;
+export type ButtonProps = ButtonAsAnchor | ButtonAsSpan | ButtonAsButton;
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary text-surface hover:bg-primary/80',
@@ -49,6 +51,7 @@ export default function Button(props: ButtonProps) {
     showIcon = true,
     children,
     className,
+    as,
     ...rest
   } = props;
 
@@ -69,6 +72,15 @@ export default function Button(props: ButtonProps) {
         {children}
         {iconElement}
       </TransitionLink>
+    );
+  }
+
+  if (as === 'span') {
+    return (
+      <span className={classes}>
+        {children}
+        {iconElement}
+      </span>
     );
   }
 

@@ -8,11 +8,13 @@ import {
   renderMDX,
 } from '@/lib/content';
 import { sortAgentsByIndex } from '@/lib/content/agent-utils';
-import { formatDateDDMMYYYY, calculateReadTime } from '@/lib/format';
+import { formatDateDDMMYYYY, calculateReadTime, formatAgentIndex } from '@/lib/format';
 import InnerPageLayout from '@/components/InnerPageLayout';
+import AgentCrossLinkSprite from '@/components/AgentCrossLinkSprite';
 import Breadcrumb from '@/components/Breadcrumb';
 import Prose from '@/components/ui/Prose';
 import Badge from '@/components/ui/Badge';
+import ArticleWithProgress from '@/components/ArticleWithProgress';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
 export async function generateStaticParams() {
@@ -52,8 +54,9 @@ export default async function BlogDetailPage({
       title: 'Agentdex',
       href: '/agentdex',
       items: sortedAgents.slice(0, 3).map((agent) => ({
-        label: agent.name,
+        label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
+        thumbnail: <AgentCrossLinkSprite slug={String(agent.slug)} name={agent.name} />,
       })),
     },
     {
@@ -98,7 +101,7 @@ export default async function BlogDetailPage({
         <span className="text-text-muted">·</span>
         <span className="text-text-muted">{readTime} min read</span>
         {post.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-4">
             {post.categories.map((category) => (
               <Badge key={category} variant="blue">
                 {category}
@@ -107,7 +110,7 @@ export default async function BlogDetailPage({
           </div>
         )}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-4">
             {post.tags.map((tag) => (
               <Badge key={tag} variant="violet">
                 {tag}
@@ -117,9 +120,11 @@ export default async function BlogDetailPage({
         )}
       </div>
 
-      <div className="mt-6 md:mt-8">
-        <Prose className="max-w-prose">{mdxContent}</Prose>
-      </div>
+      <ArticleWithProgress>
+        <div className="mt-6 md:mt-8">
+          <Prose className="max-w-none">{mdxContent}</Prose>
+        </div>
+      </ArticleWithProgress>
     </InnerPageLayout>
   );
 }

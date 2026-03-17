@@ -16,6 +16,23 @@ status: completed
 highlight: false
 links:
   github: https://github.com/lollo-santucci/ml-pipeline-toolkit
+integrations:
+  - name: Apache Airflow
+    category: Orchestration
+    variant: blue
+  - name: DVC
+    category: Versioning
+    variant: green
+  - name: PostgreSQL
+    category: Database
+    variant: violet
+metrics:
+  - label: Pipeline stages
+    value: 12+
+    color: yellow
+  - label: Status
+    value: Completed
+    color: green
 ---
 
 Every ML project starts the same way: a Jupyter notebook that works perfectly on your laptop and falls apart the moment someone else touches it. This toolkit exists because I got tired of rebuilding the same pipeline scaffolding for every client engagement.

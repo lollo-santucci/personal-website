@@ -4,6 +4,8 @@ import TransitionLink from '@/components/TransitionLink';
 interface CrossLinkItem {
   label: string;
   href: string;
+  /** Optional thumbnail rendered before the label (e.g. agent sprite). */
+  thumbnail?: React.ReactNode;
 }
 
 interface CrossLinkSection {
@@ -45,6 +47,7 @@ export default function CrossLinks({ sections, className }: CrossLinksProps) {
                 href={item.href}
                 className="group inline-flex items-center gap-2.5 border-standard border-black bg-surface font-pixbob-regular text-lg md:text-xl xl:text-[36px] px-4 py-2 md:px-5 md:py-3 xl:px-[25px] xl:py-4 outline outline-3 outline-text transition-all duration-200 motion-reduce:transition-none hover:-translate-y-0.5"
               >
+                {item.thumbnail}
                 {item.label}
                 <ArrowUpRight className="size-4 md:size-5 xl:size-6 flex-shrink-0" />
               </TransitionLink>

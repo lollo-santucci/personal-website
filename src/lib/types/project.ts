@@ -17,4 +17,6 @@ export interface Project {
   };
   image?: AssetPath;
   order?: number;
+  integrations?: Array<{ name: string; category: string; variant?: string }>;
+  metrics?: Array<{ label: string; value: string; color?: string }>;
 }

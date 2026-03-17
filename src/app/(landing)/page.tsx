@@ -21,7 +21,7 @@ export default function Home() {
           Lorenzo Santucci
         </h1>
         <p className="mt-3 font-pixbob-lite text-xl text-text md:text-3xl xl:text-[48px]">
-          FULL STACK DEVELOPER <span className="font-pixbob-regular">&amp;</span> AI ENGINEER
+          I build software that solves real problems
         </p>
       </div>
 

@@ -15,7 +15,7 @@ export default function CTABanner({ headline, body, href, className }: CTABanner
       className={[
         'group block bg-secondary border-standard border-black outline outline-3 outline-text text-surface',
         'px-6 md:px-8 xl:px-[40px] py-4 md:py-5 xl:py-[26px] xl:my-[40px]',
-        'transition-transform duration-200 motion-reduce:transition-none',
+        'transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 active:translate-y-0',
         className,
       ]
         .filter(Boolean)

@@ -58,7 +58,7 @@ export function renderPixelDissolve(
     const idx = indices[i];
     const col = idx % cols;
     const row = Math.floor(idx / cols);
-    ctx.fillRect(col * blockSize, row * blockSize, blockSize, blockSize);
+    ctx.fillRect(col * blockSize, row * blockSize, blockSize + 1, blockSize + 1);
   }
 }
 
@@ -104,7 +104,7 @@ export function renderPixelWipe(
       // Stagger: each row is offset slightly
       const stagger = (r % staggerCols) * 0.5;
       if (c + stagger < currentCol) {
-        ctx.fillRect(col * blockSize, r * blockSize, blockSize, blockSize);
+        ctx.fillRect(col * blockSize, r * blockSize, blockSize + 1, blockSize + 1);
       }
     }
   }
@@ -140,7 +140,7 @@ export function renderDitherFade(
     for (let c = 0; c < cols; c++) {
       const bayerValue = BAYER_4X4[r % 4][c % 4];
       if (bayerValue < threshold) {
-        ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
+        ctx.fillRect(c * blockSize, r * blockSize, blockSize + 1, blockSize + 1);
       }
     }
   }
@@ -192,7 +192,7 @@ export function renderTottiRun(
     for (let c = 0; c < cols; c++) {
       if (c <= wipeFrontCol) {
         for (let r = 0; r < rows; r++) {
-          ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
+          ctx.fillRect(c * blockSize, r * blockSize, blockSize + 1, blockSize + 1);
         }
       }
     }
@@ -213,7 +213,7 @@ export function renderTottiRun(
     for (let c = 0; c < cols; c++) {
       if (c > wipeFrontCol) {
         for (let r = 0; r < rows; r++) {
-          ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
+          ctx.fillRect(c * blockSize, r * blockSize, blockSize + 1, blockSize + 1);
         }
       }
     }

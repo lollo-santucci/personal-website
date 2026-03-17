@@ -12,7 +12,7 @@ export default function CollectionRow({
   className,
 }: CollectionRowProps) {
   const classes = [
-    'flex items-center justify-between gap-card-gap flex-nowrap transition-all duration-200 motion-reduce:transition-none hover:bg-text/5 hover:translate-x-1',
+    'group flex items-center justify-between gap-card-gap flex-nowrap transition-all duration-200 motion-reduce:transition-none hover:translate-x-1',
     className,
   ]
     .filter(Boolean)

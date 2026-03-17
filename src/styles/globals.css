@@ -16,6 +16,7 @@
   --blue: #467afc;
   --lime: #cbfd00;
   --green: #00cf00;
+  --yellow: #ffdd75;
   --muted: #9a9997;
 
   /* Layout spacing (desktop reference values) */
@@ -45,6 +46,7 @@
   --color-blue: var(--blue);
   --color-lime: var(--lime);
   --color-green: var(--green);
+  --color-yellow: var(--yellow);
 
   /* Font families */
   --font-pixbob-bold: 'Pixbob Bold', monospace;

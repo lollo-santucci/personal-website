@@ -120,7 +120,7 @@ export default async function AgentdexPage() {
                     </Button>
                   }
                 >
-                  <div className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[26px]">
+                  <div className="flex items-center gap-3 font-pixbob-regular text-xl md:text-2xl xl:text-[32px]">
                     <AgentPortrait
                       slug={String(agent.slug)}
                       name={agent.name}
@@ -128,7 +128,7 @@ export default async function AgentdexPage() {
                     <span className="shrink-0 text-text-muted">
                       {formatAgentIndex(agent.index)}
                     </span>
-                    <RPGSelector className="shrink-0" />
+                    <RPGSelector className="shrink-0 -mr-4" />
                     <span className="truncate">{agent.name}</span>
                     {statusBadge(agent.status)}
                   </div>

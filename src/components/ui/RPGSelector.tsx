@@ -4,7 +4,7 @@ export interface RPGSelectorProps {
 
 export default function RPGSelector({ className }: RPGSelectorProps) {
   const classes = [
-    'inline font-pixbob-regular text-2xl md:text-3xl xl:text-[40px] text-text',
+    'inline font-pixbob-regular text-2xl md:text-3xl xl:text-[40px] text-text opacity-0 -translate-x-2 transition-all duration-200 motion-reduce:transition-none group-hover:opacity-100 group-hover:translate-x-0',
     className,
   ]
     .filter(Boolean)

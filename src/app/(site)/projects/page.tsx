@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { getProjects, getBlogPosts, getAgents } from '@/lib/content';
+import { formatAgentIndex } from '@/lib/format';
 import { sortAgentsByIndex } from '@/lib/content/agent-utils';
 import InnerPageLayout from '@/components/InnerPageLayout';
+import AgentCrossLinkSprite from '@/components/AgentCrossLinkSprite';
 import ProjectCard from '@/components/ProjectCard';
 import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
@@ -27,8 +29,9 @@ export default async function ProjectsPage() {
       title: 'Agentdex',
       href: '/agentdex',
       items: sortedAgents.slice(0, 3).map((agent) => ({
-        label: agent.name,
+        label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
+        thumbnail: <AgentCrossLinkSprite slug={String(agent.slug)} name={agent.name} />,
       })),
     },
     {

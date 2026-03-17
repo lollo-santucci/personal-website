@@ -1,34 +1,44 @@
 import Image from 'next/image';
 import TransitionLink from '@/components/TransitionLink';
 import Button from '@/components/ui/Button';
+import FooterInvaders from '@/components/FooterInvaders';
+import TottiLayingSprite from '@/components/TottiLayingSprite';
+import RPGSelector from '@/components/ui/RPGSelector';
 
 interface FooterProps {
   variant?: 'rich' | 'minimal';
 }
 
 const NAV_LINKS = [
-  { label: 'About', href: '/about' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'Agentdex', href: '/agentdex' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'ABOUT', href: '/about' },
+  { label: 'PROJECTS', href: '/projects' },
+  { label: 'AGENTDEX', href: '/agentdex' },
+  { label: 'BLOG', href: '/blog' },
 ] as const;
 
-function SocialIcons() {
+function SocialIcons({ fluid }: { fluid?: boolean }) {
+  const gap = fluid ? 'gap-[0.8cqw]' : 'gap-4';
+  const iconClass = fluid
+    ? 'pixel-art transition-transform duration-200 motion-reduce:transition-none hover:scale-125'
+    : 'pixel-art size-6 transition-transform duration-200 motion-reduce:transition-none hover:scale-125';
+  const iconStyle = fluid ? { width: '3.5cqw', height: '3.5cqw' } : undefined;
+  const tapTarget = fluid ? '' : 'min-h-[44px] min-w-[44px]';
+
   return (
-    <div className="flex items-center gap-4">
+    <div className={`flex items-center ${gap}`}>
       <a
         href="https://linkedin.com/in/lorenzosantucci"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="LinkedIn"
-        className="flex min-h-[44px] min-w-[44px] items-center justify-center"
+        className={`flex items-center justify-center ${tapTarget}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icons/linkedin-icon-pixel.svg"
           alt=""
-          className="pixel-art size-6 transition-transform duration-200 motion-reduce:transition-none hover:scale-125"
+          className={iconClass}
+          style={iconStyle}
           aria-hidden="true"
         />
       </a>
@@ -37,14 +47,14 @@ function SocialIcons() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub"
-        className="flex min-h-[44px] min-w-[44px] items-center justify-center"
+        className={`flex items-center justify-center ${tapTarget}`}
       >
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/icons/github-pixel-icon.png"
           alt=""
-          width={25}
-          height={25}
-          className="pixel-art transition-transform duration-200 motion-reduce:transition-none hover:scale-125"
+          className={iconClass}
+          style={iconStyle}
           aria-hidden="true"
         />
       </a>
@@ -93,59 +103,101 @@ function MinimalFooter() {
   );
 }
 
-function RichFooter() {
+function ArcadeFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="px-6 py-10 md:px-12 md:py-14 xl:px-page-px xl:py-16">
-      <div className="mx-auto max-w-content-max bg-primary px-[50px] py-[25px] outline outline-3 outline-text">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[1fr_auto_auto] md:gap-16">
-          <div className="flex flex-col gap-2">
-            <span
-              className="font-pixbob-bold text-2xl text-surface md:text-3xl xl:text-[46px]"
-              style={{
-                WebkitTextStrokeWidth: '10px',
-                WebkitTextStrokeColor: 'var(--black)',
-                paintOrder: 'stroke fill',
-              }}
-            >
-              Lorenzo Santucci
-            </span>
-            <span className="font-pixbob-regular text-base text-text-muted md:text-lg xl:text-[28px]">
-              Freelance tech builder
-            </span>
+    <footer className="px-6 py-10 md:px-12 md:py-14 xl:px-100 xl:py-60">
+      <div className="mx-auto max-w-content-max">
+        {/* ── Room illustration — @container for fluid scaling ─── */}
+        <div className="@container relative mx-auto w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/imgs/isometric-room.svg"
+            alt="Isometric pixel-art room illustration"
+            className="pixel-art w-full"
+            loading="lazy"
+          />
+
+          {/* ── "Lorenzo Santucci" — left wall ────────────────── */}
+          <span
+            className="absolute left-[9%] top-[19%] origin-bottom-left rotate-[-27deg] font-pixbob-bold text-[5cqw] text-surface"
+            style={{
+              WebkitTextStrokeWidth: '0.7cqw',
+              WebkitTextStrokeColor: 'var(--black)',
+              paintOrder: 'stroke fill',
+            }}
+          >
+            Lorenzo Santucci
+          </span>
+
+          {/* ── "Freelance tech builder" — right wall ─────────── */}
+          <span className="absolute right-[12%] top-[18%] origin-bottom-right rotate-[28deg] font-pixbob-regular text-[3.5cqw] text-text">
+            Freelance tech builder
+          </span>
+
+          {/* ── Totti on the couch ────────────────────────────── */}
+          <TottiLayingSprite
+            className="absolute left-[52%] top-[26%]"
+            style={{
+              width: '19cqw',
+              height: '19cqw',
+              transform: 'rotate(26deg) skewX(15deg)',
+            }}
+          />
+
+          {/* ── FooterInvaders on the TV ──────────────────────── */}
+          <div
+            className="absolute left-[13.5%] top-[39.1%] hidden h-[35%] w-[25%] overflow-hidden md:block"
+            style={{
+              width: '20cqw',
+              height: '12.2cqw',
+              transform: 'rotate(-26.2deg) skewX(-26deg)',
+              transformOrigin: 'center center',
+            }}
+          >
+            <FooterInvaders />
           </div>
 
-          <nav aria-label="Footer navigation">
-            <ul className="flex flex-col gap-2 md:gap-3">
+          {/* ── Copyright + social — bottom-left, follows left floor angle ── */}
+          <div className="absolute bottom-[18%] left-[8%] origin-bottom-left rotate-[27deg]">
+            <div className="flex items-center gap-[0.8cqw]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/icons/copyright.svg"
+                alt=""
+                className="pixel-art"
+                style={{ width: '2.5cqw', height: '2.5cqw' }}
+                aria-hidden="true"
+              />
+              <span className="font-pixbob-lite text-[2.8cqw] text-text">
+                Lorenzo Santucci {year}
+              </span>
+              <SocialIcons fluid />
+            </div>
+          </div>
+
+          {/* ── Navigation — bottom-right, follows right floor angle ── */}
+          <nav
+            className="absolute bottom-[20%] right-[6%] origin-bottom-right rotate-[-28deg]"
+            aria-label="Footer navigation"
+          >
+            <ul className="flex items-center gap-x-[1.5cqw]">
               {NAV_LINKS.map(({ label, href }) => (
                 <li key={href}>
                   <TransitionLink
                     href={href}
-                    className="group relative inline-block font-pixbob-regular text-base text-text md:text-lg xl:text-[28px]"
+                    className="group relative inline-flex items-center gap-[0.5cqw] font-pixbob-regular text-[3cqw] text-text"
                   >
+                    <span className="inline font-pixbob-regular text-[3cqw] text-text opacity-0 -translate-x-2 transition-all duration-200 motion-reduce:transition-none group-hover:opacity-100 group-hover:translate-x-0">
+                      {'>'}
+                    </span>
                     {label}
-                    <span className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 bg-text transition-transform duration-200 motion-reduce:transition-none group-hover:scale-x-100" />
                   </TransitionLink>
                 </li>
               ))}
             </ul>
           </nav>
-
-          <div className="flex items-start">
-            <SocialIcons />
-          </div>
-        </div>
-
-        <div className="mt-10 border-t-2 border-text md:mt-14" />
-
-        <div className="mt-4 flex flex-col items-center justify-between gap-2 md:flex-row md:mt-6">
-          <span className="font-pixbob-lite text-sm text-text-muted md:text-base xl:text-[22px]">
-            &copy; {year} Lorenzo Santucci
-          </span>
-          <span className="font-pixbob-lite text-sm text-text-muted md:text-base xl:text-[22px]">
-            Built with &hearts;
-          </span>
         </div>
       </div>
     </footer>
@@ -154,5 +206,5 @@ function RichFooter() {
 
 export default function Footer({ variant = 'rich' }: FooterProps) {
   if (variant === 'minimal') return <MinimalFooter />;
-  return <RichFooter />;
+  return <ArcadeFooter />;
 }

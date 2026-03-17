@@ -14,7 +14,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         {/* Screenshot area with offset shadow */}
         <div className="relative mb-4">
           {/* Offset shadow */}
-          <div className="absolute inset-0 translate-x-2 translate-y-2 bg-text transition-all duration-300 motion-reduce:transition-none group-hover:translate-x-3 group-hover:translate-y-3" />
+          <div className="absolute inset-0 translate-x-4 translate-y-4 bg-text transition-all duration-300 motion-reduce:transition-none group-hover:translate-x-3 group-hover:translate-y-3" />
 
           {/* Image frame */}
           <div className="relative overflow-hidden border-frame border-black bg-surface">
@@ -22,14 +22,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               <img
                 src={project.image}
                 alt={`Screenshot of ${project.title}`}
-                className="block w-full object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
+                className="block w-full object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-100"
               />
             ) : (
-              <div className="flex aspect-video items-center justify-center bg-surface transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105">
-                <span className="font-pixbob-regular text-text-muted">
-                  No preview
-                </span>
-              </div>
+              <img
+                src={"/assets/projects/fallback.jpg"}
+                alt={`Screenshot of ${project.title}`}
+                className="block w-full object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
+              />
             )}
 
             {/* Tech badges stacked on screenshot */}
