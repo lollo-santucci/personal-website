@@ -17,7 +17,7 @@ import type { BadgeVariant } from '@/components/ui/Badge';
 import ProjectMetadataPanel from '@/components/ProjectMetadataPanel';
 import CTABanner from '@/components/ui/CTABanner';
 import CrossLinks from '@/components/ui/CrossLinks';
-import AgentCrossLinkSprite from '@/components/AgentCrossLinkSprite';
+import AgentSprite from '@/components/AgentSprite';
 import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
@@ -60,7 +60,7 @@ export default async function ProjectDetailPage({
       items: sortedAgents.slice(0, 3).map((agent) => ({
         label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
-        thumbnail: <AgentCrossLinkSprite slug={String(agent.slug)} name={agent.name} />,
+        thumbnail: <AgentSprite slug={String(agent.slug)} name={agent.name} scale={1} className="shrink-0 mr-[15px]" />,
       })),
     },
     {

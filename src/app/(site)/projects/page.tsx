@@ -3,7 +3,7 @@ import { getProjects, getBlogPosts, getAgents } from '@/lib/content';
 import { formatAgentIndex } from '@/lib/format';
 import { sortAgentsByIndex } from '@/lib/content/agent-utils';
 import InnerPageLayout from '@/components/InnerPageLayout';
-import AgentCrossLinkSprite from '@/components/AgentCrossLinkSprite';
+import AgentSprite from '@/components/AgentSprite';
 import ProjectCard from '@/components/ProjectCard';
 import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
@@ -31,7 +31,7 @@ export default async function ProjectsPage() {
       items: sortedAgents.slice(0, 3).map((agent) => ({
         label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
-        thumbnail: <AgentCrossLinkSprite slug={String(agent.slug)} name={agent.name} />,
+        thumbnail: <AgentSprite slug={String(agent.slug)} name={agent.name} scale={1} className="shrink-0 mr-[15px]" />,
       })),
     },
     {

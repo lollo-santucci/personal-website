@@ -4,7 +4,7 @@ import { formatDateDDMMYYYY, isRecentPost } from '@/lib/format';
 import { formatAgentIndex } from '@/lib/format';
 import { sortAgentsByIndex } from '@/lib/content/agent-utils';
 import InnerPageLayout from '@/components/InnerPageLayout';
-import AgentCrossLinkSprite from '@/components/AgentCrossLinkSprite';
+import AgentSprite from '@/components/AgentSprite';
 import CollectionContainer from '@/components/ui/CollectionContainer';
 import BlogPostRow from '@/components/BlogPostRow';
 import Reveal from '@/components/Reveal';
@@ -33,7 +33,7 @@ export default async function BlogPage() {
       items: sortedAgents.slice(0, 3).map((agent) => ({
         label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
-        thumbnail: <AgentCrossLinkSprite slug={String(agent.slug)} name={agent.name} />,
+        thumbnail: <AgentSprite slug={String(agent.slug)} name={agent.name} scale={1} className="shrink-0 mr-[15px]" />,
       })),
     },
     {

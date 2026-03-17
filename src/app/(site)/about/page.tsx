@@ -13,7 +13,7 @@ import StatBar, { StatBarGroup } from '@/components/ui/StatBar';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
-import CharacterSprite from '@/components/CharacterSprite';
+import AgentSprite from '@/components/AgentSprite';
 import LogoMarquee from '@/components/ui/LogoMarquee';
 import TransitionLink from '@/components/TransitionLink';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
@@ -28,20 +28,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Lorenzo spritesheet: 1792×1312, 32×64 frames
-const LORENZO_SPRITE_CONFIG = {
-  slug: 'lorenzo-santucci',
-  sheetWidth: 1792,
-  sheetHeight: 1312,
-  idleCol: 3,
-  idleRow: 0,
-  scale: 6,
-  animations: [
-    { row: 7, startCol: 0, frames: 11 },  // read book
-    { row: 4, startCol: 0, frames: 6 },  // walk up
-    { row: 6, startCol: 0, frames: 6 },  // walk right
-  ],
-} as const;
 
 const TRUSTED_BY_LOGOS = [
   { src: '/assets/logos/logo-indigo.svg', alt: 'indigo.ai', href: 'https://indigo.ai', height: 28, className: 'h-7 md:h-18' },
@@ -139,9 +125,12 @@ export default async function AboutPage() {
               <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between xl:px-15">
                 {/* Animated character sprite */}
                 <div className="shrink-0">
-                  <CharacterSprite
+                  <AgentSprite
+                    slug="lorenzo-santucci"
                     name={agent.name}
-                    {...LORENZO_SPRITE_CONFIG}
+                    scale={6}
+                    animations={['read-book', 'walk-up', 'walk-right']}
+                    autoPlay
                   />
                 </div>
 

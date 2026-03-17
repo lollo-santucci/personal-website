@@ -8,6 +8,7 @@ import CollectionRow from '@/components/ui/CollectionRow';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import RPGSelector from '@/components/ui/RPGSelector';
+import AgentSprite from '@/components/AgentSprite';
 import Reveal from '@/components/Reveal';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
 
@@ -17,39 +18,6 @@ export const metadata: Metadata = {
     "Browse Lorenzo's AI agents — specialized entities built to assist with real-world tasks.",
   alternates: { canonical: '/agentdex' },
 };
-
-/** Frame dimensions for agent spritesheets (32x64 per frame). */
-const FRAME_W = 32;
-const FRAME_H = 64;
-/** Front-facing idle frame: column 3, row 0. */
-const FRONT_COL = 3;
-const FRONT_ROW = 0;
-const PORTRAIT_SCALE = 2;
-
-function AgentPortrait({ slug, name }: { slug: string; name: string }) {
-  const src = `/assets/agents/${slug}/spritesheets/character_spritesheet.png`;
-  const displayW = FRAME_W * PORTRAIT_SCALE;
-  const displayH = FRAME_H * PORTRAIT_SCALE;
-  const bgX = FRONT_COL * displayW;
-  const bgY = FRONT_ROW * displayH;
-
-  return (
-    <div
-      role="img"
-      aria-label={`${name} portrait`}
-      className="pixel-art shrink-0"
-      style={{
-        width: displayW,
-        height: displayH,
-        backgroundImage: `url(${src})`,
-        backgroundPosition: `-${bgX}px -${bgY}px`,
-        backgroundSize: 'auto',
-        backgroundRepeat: 'no-repeat',
-        imageRendering: 'pixelated',
-      }}
-    />
-  );
-}
 
 function statusBadge(status: string) {
   if (status === 'coming-soon') {
@@ -121,9 +89,11 @@ export default async function AgentdexPage() {
                   }
                 >
                   <div className="flex items-center gap-3 font-pixbob-regular text-xl md:text-2xl xl:text-[32px]">
-                    <AgentPortrait
+                    <AgentSprite
                       slug={String(agent.slug)}
                       name={agent.name}
+                      scale={2}
+                      className="shrink-0"
                     />
                     <span className="shrink-0 text-text-muted">
                       {formatAgentIndex(agent.index)}

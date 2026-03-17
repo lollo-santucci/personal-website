@@ -161,6 +161,12 @@
   animation: page-enter 300ms ease-out both;
 }
 
+/* Text cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* StatBar fill */
 @keyframes stat-fill {
   from { transform: scaleY(0); }
