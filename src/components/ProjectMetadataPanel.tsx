@@ -15,7 +15,7 @@ const categoryColors: Record<CategoryVariant, string> = {
 function CategoryBadge({ children, variant = 'accent' }: { children: React.ReactNode; variant?: string }) {
   const colors = categoryColors[variant as CategoryVariant] || categoryColors.accent;
   return (
-    <span className={`shrink-0 border-standard border-black outline outline-3 outline-text px-3 py-1.5 font-pixbob-regular text-xs md:text-sm xl:text-[22px] ${colors}`}>
+    <span className={`shrink-0 border-standard border-black outline outline-3 outline-text px-3 py-1.5 font-pixbob-regular text-xs md:text-sm xl:text-[20px] 2xl:text-[22px] ${colors}`}>
       {children}
     </span>
   );
@@ -24,7 +24,7 @@ function CategoryBadge({ children, variant = 'accent' }: { children: React.React
 function SectionBadge({ children, variant }: { children: React.ReactNode; variant: CategoryVariant }) {
   const colors = categoryColors[variant];
   return (
-    <span className={`inline-flex self-start border-standard border-black outline outline-3 outline-text px-3 py-1.5 font-pixbob-regular text-sm md:text-lg xl:text-[32px] ${colors}`}>
+    <span className={`inline-flex self-start border-standard border-black outline outline-3 outline-text px-3 py-1.5 font-pixbob-regular text-sm md:text-lg xl:text-[26px] 2xl:text-[32px] ${colors}`}>
       {children}
     </span>
   );
@@ -32,7 +32,7 @@ function SectionBadge({ children, variant }: { children: React.ReactNode; varian
 
 function Selector() {
   return (
-    <span className="w-[18px] shrink-0 font-pixbob-regular text-lg md:w-[22px] md:text-2xl xl:w-[26px] xl:text-[40px]">
+    <span className="w-[18px] shrink-0 font-pixbob-regular text-lg md:w-[22px] md:text-2xl xl:w-[26px] xl:text-[32px] 2xl:text-[40px]">
       {'>'}
     </span>
   );
@@ -63,13 +63,13 @@ export default function ProjectMetadataPanel({
       {integrations && integrations.length > 0 && (
         <>
           <SectionBadge variant="blue">Integrations</SectionBadge>
-          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-surface px-5 py-4 xl:px-[25px]">
+          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-surface xl:px-5 2xl:px-[25px] px-5 py-4">
             {integrations.map((item) => (
               <div
                 key={item.name}
                 className="flex items-center justify-between"
               >
-                <div className="flex items-center font-pixbob-regular text-base md:text-lg xl:text-[32px]">
+                <div className="flex items-center font-pixbob-regular text-base md:text-lg xl:text-[26px] 2xl:text-[32px]">
                   <Selector />
                   <span>{item.name}</span>
                 </div>
@@ -86,7 +86,7 @@ export default function ProjectMetadataPanel({
       {stack.length > 0 && (
         <>
           <SectionBadge variant="lime">Tech Stack</SectionBadge>
-          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-surface px-5 py-4 font-pixbob-regular text-base md:text-lg xl:px-[25px] xl:text-[32px]">
+          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-surface xl:px-5 2xl:px-[25px] px-5 py-4 font-pixbob-regular text-base md:text-lg xl:text-[26px] 2xl:text-[32px]">
             {stack.map((tech) => (
               <div
                 key={tech}
@@ -104,18 +104,18 @@ export default function ProjectMetadataPanel({
       {metrics && metrics.length > 0 && (
         <>
           <SectionBadge variant="dark">Stats</SectionBadge>
-          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-text px-5 py-4 xl:px-[25px]">
+          <div className="flex w-full flex-col gap-2.5 border-standard border-black outline outline-3 outline-text bg-text xl:px-5 2xl:px-[25px] px-5 py-4">
             {metrics.map((metric) => (
               <div
                 key={metric.label}
                 className="flex items-center justify-between"
               >
-                <div className="flex items-center font-pixbob-regular text-base text-surface md:text-lg xl:text-[32px]">
+                <div className="flex items-center font-pixbob-regular text-base text-surface md:text-lg xl:text-[26px] 2xl:text-[32px]">
                   <Selector />
                   <span>{metric.label}</span>
                 </div>
                 <span
-                  className="font-pixbob-regular text-base md:text-lg xl:text-[32px]"
+                  className="font-pixbob-regular text-base md:text-lg xl:text-[26px] 2xl:text-[32px]"
                   style={{ color: metric.color === 'yellow' ? 'var(--yellow)' : metric.color === 'accent' ? 'var(--accent)' : 'var(--green)' }}
                 >
                   {metric.value}
@@ -132,7 +132,7 @@ export default function ProjectMetadataPanel({
           href={liveUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex w-full items-center justify-center gap-2.5 border-standard border-black outline outline-3 outline-text bg-secondary px-6 py-4 md:px-8 md:py-5 xl:px-[25px] xl:py-4 font-pixbob-regular text-lg text-surface md:text-xl xl:text-[36px] transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 active:translate-y-0"
+          className="group flex w-full items-center justify-center gap-2.5 border-standard border-black outline outline-3 outline-text bg-blue px-6 py-4 md:px-8 md:py-5 xl:px-5 2xl:px-[25px] xl:py-4 font-pixbob-regular text-lg text-surface md:text-xl xl:text-[30px] 2xl:text-[36px] transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 active:translate-y-0"
         >
           Launch project
           <ArrowUpRight className="size-[1em]" />

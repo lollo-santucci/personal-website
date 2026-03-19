@@ -5,7 +5,7 @@ import TransitionLink from '@/components/TransitionLink';
 import ArrowUpRight from '@/components/ui/ArrowUpRight';
 
 type ButtonVariant = 'primary' | 'secondary' | 'dark';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 interface ButtonBaseProps {
   variant: ButtonVariant;
@@ -37,9 +37,10 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'text-sm md:text-base xl:text-[22px] px-3 py-1 md:px-3 md:py-1.5',
-  md: 'text-lg md:text-xl xl:text-[36px] px-4 py-1.5 md:px-5 md:py-3',
-  lg: 'text-xl md:text-2xl xl:text-[40px] px-5 py-2 md:px-6 md:py-3',
+  xs: 'text-xs md:text-sm xl:text-[16px] 2xl:text-[18px] px-2 py-0.5 md:px-2.5 md:py-1',
+  sm: 'text-sm md:text-base xl:text-[20px] 2xl:text-[22px] px-3 py-1 md:px-3 md:py-1.5',
+  md: 'text-lg md:text-xl xl:text-[30px] 2xl:text-[36px] px-4 py-1.5 md:px-5 md:py-3',
+  lg: 'text-xl md:text-2xl xl:text-[32px] 2xl:text-[40px] px-5 py-2 md:px-6 md:py-3',
 };
 
 export default function Button(props: ButtonProps) {

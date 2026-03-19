@@ -12,7 +12,12 @@ const C = {
 } as const;
 
 // ── Pixel scale ────────────────────────────────────────────────────────────
-const PX = 3;
+// Target logical width in game units — the game is designed around ~110 units.
+// PX is computed dynamically so the game fills the container at any size.
+const TARGET_LOG_W = 110;
+const MIN_PX = 1;
+/** Text is drawn at this multiple of PX for better readability on small screens. */
+const TEXT_SCALE = 1.5;
 
 // ── Sprites ────────────────────────────────────────────────────────────────
 const INVADER_SPRITES: number[][][] = [
@@ -78,13 +83,20 @@ const F: Record<string, number[]> = {
 };
 const FW=5,FH=5;
 
-function drawText(ctx:CanvasRenderingContext2D,text:string,cx:number,cy:number,color:string,px:number){
-  const total=text.length*(FW+1)-1;let x=cx-total/2;const y=cy-FH/2;
+function drawText(ctx:CanvasRenderingContext2D,text:string,cx:number,cy:number,color:string,px:number,textPx?:number){
+  const tpx=textPx??px;
+  const cpx=Math.ceil(tpx);
+  // Center the text using tpx for the actual glyph size
+  const totalW=text.length*(FW+1)-1;
+  const startX=cx*px-totalW*tpx/2;
+  const startY=cy*px-FH*tpx/2;
   ctx.fillStyle=color;
-  for(const ch of text){const g=F[ch];if(g){for(let r=0;r<FH;r++)for(let c=0;c<FW;c++)if(g[r*FW+c])ctx.fillRect(Math.round((x+c)*px),Math.round((y+r)*px),px,px);}x+=FW+1;}
+  let ox=0;
+  for(const ch of text){const g=F[ch];if(g){for(let r=0;r<FH;r++)for(let c=0;c<FW;c++)if(g[r*FW+c])ctx.fillRect(Math.round(startX+ox+c*tpx),Math.round(startY+r*tpx),cpx,cpx);}ox+=(FW+1)*tpx;}
 }
 function drawSprite(ctx:CanvasRenderingContext2D,sprite:number[],w:number,h:number,x:number,y:number,color:string,px:number){
-  ctx.fillStyle=color;for(let r=0;r<h;r++)for(let c=0;c<w;c++)if(sprite[r*w+c])ctx.fillRect(Math.round((x+c)*px),Math.round((y+r)*px),px,px);
+  const cpx=Math.ceil(px);
+  ctx.fillStyle=color;for(let r=0;r<h;r++)for(let c=0;c<w;c++)if(sprite[r*w+c])ctx.fillRect(Math.round((x+c)*px),Math.round((y+r)*px),cpx,cpx);
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -108,7 +120,7 @@ export default function FooterInvaders(){
     inv:[] as Inv[],bul:[] as Bul[],expl:[] as Expl[],
     shipX:0,dir:1,lastMv:0,lastWig:0,wigF:0,lastEF:0,
     pB:false,cols:BASE_COLS,anim:0,vis:false,red:false,
-    goTime:0,score:0,logW:0,logH:0,
+    goTime:0,score:0,logW:0,logH:0,px:MIN_PX,
   }).current;
 
   const spawnWave=useCallback((cols:number)=>{
@@ -145,8 +157,9 @@ export default function FooterInvaders(){
       cv!.width=Math.round(rect.width*dpr);
       cv!.height=Math.round(rect.height*dpr);
       ctx!.setTransform(dpr,0,0,dpr,0,0);
-      s.logW=rect.width/PX;
-      s.logH=rect.height/PX;
+      s.px=Math.max(MIN_PX,rect.width/TARGET_LOG_W);
+      s.logW=rect.width/s.px;
+      s.logH=rect.height/s.px;
     }
     resize();
     window.addEventListener('resize',resize);
@@ -157,7 +170,7 @@ export default function FooterInvaders(){
     function onMove(e:MouseEvent){
       if(pRef.current!=='playing')return;
       const rect=cv!.getBoundingClientRect();
-      const mx=(e.clientX-rect.left)/PX;
+      const mx=(e.clientX-rect.left)/s.px;
       s.shipX=Math.max(0,Math.min(s.logW-SHIP_W,mx-SHIP_W/2));
     }
     function onClick(){
@@ -176,18 +189,15 @@ export default function FooterInvaders(){
       if(now-last<16)return;
       last=now;
       const p=pRef.current;
-      const W=s.logW,H=s.logH;
+      const W=s.logW,H=s.logH,px=s.px;
 
       ctx!.fillStyle=C.screenBg;
-      ctx!.fillRect(0,0,W*PX,H*PX);
+      ctx!.fillRect(0,0,W*px,H*px);
 
       if(p==='attract'){
-        // Play triangle (pixel art) centered above text
-        const triX=Math.floor(W/2)-3,triY=Math.floor(H/2)-8;
-        ctx!.fillStyle=C.lime;
-        drawSprite(ctx!, PLAY_ICON, 5, 7, W/2-2, H/2-10, C.lime, PX);
+        drawSprite(ctx!, PLAY_ICON, 5, 7, W/2-2, H/2-10, C.lime, px);
         if(Math.floor(now/600)%2===0)
-          drawText(ctx!,'PLAY GAME',W/2,H/2+4,C.lime,PX);
+          drawText(ctx!,'PLAY GAME',W/2,H/2+4,C.lime,px,px*TEXT_SCALE);
 
       }else if(p==='playing'){
         if(!s.red){
@@ -210,29 +220,30 @@ export default function FooterInvaders(){
           for(let i=s.expl.length-1;i>=0;i--){s.expl[i].frame=Math.floor((now-s.expl[i].t)/EX_MS);if(s.expl[i].frame>=EX_FR)s.expl.splice(i,1);}
           if(s.inv.length>0&&s.inv.every(i=>!i.alive)){s.goTime=now;pRef.current='win';setPhase('win');}
         }
-        for(const i of s.inv){if(!i.alive)continue;drawSprite(ctx!,INVADER_SPRITES[i.type%2][s.wigF],INV,INV,i.x,i.y,ROW_C[i.type%2],PX);}
-        for(const b of s.bul){ctx!.fillStyle=b.color;ctx!.fillRect(Math.round(b.x*PX),Math.round(b.y*PX),PX*2,PX*5);}
-        for(const ex of s.expl){if(ex.frame<EX_FR){ctx!.fillStyle=ex.color;for(const[ox,oy]of EX_P[ex.frame])ctx!.fillRect(Math.round((ex.x+ox)*PX),Math.round((ex.y+oy)*PX),PX,PX);}}
-        drawSprite(ctx!,SHIP_SPRITE,SHIP_W,SHIP_H,s.shipX,H-SHIP_OFF-SHIP_H,C.white,PX);
-        drawText(ctx!,String(s.score),W-15,4,C.white,PX);
+        for(const i of s.inv){if(!i.alive)continue;drawSprite(ctx!,INVADER_SPRITES[i.type%2][s.wigF],INV,INV,i.x,i.y,ROW_C[i.type%2],px);}
+        const cpx=Math.ceil(px);
+        for(const b of s.bul){ctx!.fillStyle=b.color;ctx!.fillRect(Math.round(b.x*px),Math.round(b.y*px),cpx*2,cpx*5);}
+        for(const ex of s.expl){if(ex.frame<EX_FR){ctx!.fillStyle=ex.color;for(const[ox,oy]of EX_P[ex.frame])ctx!.fillRect(Math.round((ex.x+ox)*px),Math.round((ex.y+oy)*px),cpx,cpx);}}
+        drawSprite(ctx!,SHIP_SPRITE,SHIP_W,SHIP_H,s.shipX,H-SHIP_OFF-SHIP_H,C.white,px);
+        drawText(ctx!,String(s.score),W-15,4,C.white,px,px*TEXT_SCALE);
 
       }else if(p==='win'){
-        drawText(ctx!,'GREAT GAME',W/2,H/2-6,C.lime,PX);
-        drawText(ctx!,String(s.score),W/2,H/2+2,C.white,PX);
-        if(Math.floor(now/500)%2===0)drawText(ctx!,'PLAY AGAIN',W/2,H/2+12,C.accent,PX);
+        drawText(ctx!,'GREAT GAME',W/2,H/2-6,C.lime,px,px*TEXT_SCALE);
+        drawText(ctx!,String(s.score),W/2,H/2+2,C.white,px,px*TEXT_SCALE);
+        if(Math.floor(now/500)%2===0)drawText(ctx!,'PLAY AGAIN',W/2,H/2+12,C.accent,px,px*TEXT_SCALE);
 
       }else{
         // gameover
-        for(const i of s.inv){if(!i.alive)continue;drawSprite(ctx!,INVADER_SPRITES[i.type%2][s.wigF],INV,INV,i.x,i.y,ROW_C[i.type%2],PX);}
-        for(let i=s.expl.length-1;i>=0;i--){s.expl[i].frame=Math.floor((now-s.expl[i].t)/EX_MS);if(s.expl[i].frame>=EX_FR){s.expl.splice(i,1);continue;}ctx!.fillStyle=s.expl[i].color;for(const[ox,oy]of EX_P[s.expl[i].frame])ctx!.fillRect(Math.round((s.expl[i].x+ox)*PX),Math.round((s.expl[i].y+oy)*PX),PX,PX);}
-        drawText(ctx!,'GAME OVER',W/2,H/2-6,C.white,PX);
-        drawText(ctx!,String(s.score),W/2,H/2+2,C.lime,PX);
-        if(Math.floor(now/500)%2===0)drawText(ctx!,'PLAY AGAIN',W/2,H/2+12,C.accent,PX);
+        for(const i of s.inv){if(!i.alive)continue;drawSprite(ctx!,INVADER_SPRITES[i.type%2][s.wigF],INV,INV,i.x,i.y,ROW_C[i.type%2],px);}
+        {const cpx=Math.ceil(px);for(let i=s.expl.length-1;i>=0;i--){s.expl[i].frame=Math.floor((now-s.expl[i].t)/EX_MS);if(s.expl[i].frame>=EX_FR){s.expl.splice(i,1);continue;}ctx!.fillStyle=s.expl[i].color;for(const[ox,oy]of EX_P[s.expl[i].frame])ctx!.fillRect(Math.round((s.expl[i].x+ox)*px),Math.round((s.expl[i].y+oy)*px),cpx,cpx);}}
+        drawText(ctx!,'GAME OVER',W/2,H/2-6,C.white,px,px*TEXT_SCALE);
+        drawText(ctx!,String(s.score),W/2,H/2+2,C.lime,px);
+        if(Math.floor(now/500)%2===0)drawText(ctx!,'PLAY AGAIN',W/2,H/2+12,C.accent,px,px*TEXT_SCALE);
       }
 
       // Scanlines
       ctx!.save();ctx!.globalAlpha=0.04;
-      for(let y=0;y<H*PX;y+=2){ctx!.fillStyle='#000';ctx!.fillRect(0,y,W*PX,1);}
+      for(let y=0;y<H*px;y+=2){ctx!.fillStyle='#000';ctx!.fillRect(0,y,W*px,1);}
       ctx!.restore();
     }
 

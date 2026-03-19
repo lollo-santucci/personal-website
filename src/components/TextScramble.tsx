@@ -6,6 +6,8 @@ interface TextScrambleProps {
   text: string;
   scrambleOnMount?: boolean;
   scrambleOnHover?: boolean;
+  /** External trigger — when transitioning to true, plays scramble. */
+  trigger?: boolean;
   className?: string;
   /** Total animation duration in ms. */
   duration?: number;
@@ -25,6 +27,7 @@ export default function TextScramble({
   text,
   scrambleOnMount = false,
   scrambleOnHover = true,
+  trigger,
   className,
   duration = 600,
 }: TextScrambleProps) {
@@ -103,6 +106,10 @@ export default function TextScramble({
     }
     return () => cancelAnimationFrame(rafRef.current);
   }, [scrambleOnMount, scramble]);
+
+  useEffect(() => {
+    if (trigger) scramble();
+  }, [trigger, scramble]);
 
   useEffect(() => {
     setDisplay(text);

@@ -11,7 +11,6 @@ import InnerPageLayout from '@/components/InnerPageLayout';
 import Breadcrumb from '@/components/Breadcrumb';
 import ChatSection from '@/components/ChatSection';
 import SectionLabel from '@/components/ui/SectionLabel';
-import RPGSelector from '@/components/ui/RPGSelector';
 import AgentSprite from '@/components/AgentSprite';
 import StatBar from '@/components/ui/StatBar';
 import { StatBarGroup } from '@/components/ui/StatBar';
@@ -84,18 +83,18 @@ export default async function AgentProfilePage({
       }
     >
 
-      <span className="mt-2 block font-pixbob-regular text-2xl md:text-3xl text-text-muted opacity-60">
+      <span className="mt-[-20px] md:mt-[-40px] xl:mt-[-60px] block font-pixbob-regular text-4xl md:text-4xl xl:text-[38px] 2xl:text-[48px] text-text-muted opacity-60">
         #{formatAgentIndex(agent.index)}
       </span>
 
       {/* Two-column layout: sprite+chat left, metadata right */}
-      <div className="mt-6 flex flex-col lg:flex-row gap-8 md:gap-10">
+      <div className="mt-6 md:mt-16 flex flex-col lg:flex-row gap-8 md:gap-10 lg:gap-10">
         {/* Left column — sprite + chat */}
         <div className="flex flex-col items-center gap-5 lg:flex-1 lg:min-w-0">
           <AgentSprite
             slug={String(agent.slug)}
             name={agent.name}
-            scale={4}
+            scale={{ base: 4, md: 6, lg: 7, xl: 8 }}
             animations={['walk-down']}
             hoverToAnimate
             className="shrink-0"
@@ -106,16 +105,16 @@ export default async function AgentProfilePage({
         </div>
 
         {/* Right column — metadata sections */}
-        <div className="flex flex-col gap-6 md:gap-8 lg:justify-between lg:self-stretch shrink-0">
+        <div className="flex flex-col gap-6 md:gap-8 lg:flex-1 lg:min-w-0 lg:justify-between lg:self-stretch">
           {/* Role + Best for — side by side */}
-          <div className="flex gap-6 xl:gap-[25px]">
+          <div className="flex gap-6 xl:gap-5 2xl:gap-[25px]">
             <div className="flex-1 min-w-0">
               <SectionLabel variant="dark" as="h2">
                 role
               </SectionLabel>
-              <p className="mt-2 flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[28px]">
-                <RPGSelector />
-                <span>{agent.role}</span>
+              <p className="mt-2 flex items-center font-pixbob-regular text-xl md:text-3xl xl:text-[26px] 2xl:text-[32px]">
+                <span className="w-[1em] md:text-[40px] leading-none shrink-0">{'>'}</span>
+                <span className="leading-[32px]">{agent.role}</span>
               </p>
             </div>
 
@@ -127,10 +126,10 @@ export default async function AgentProfilePage({
                 {agent.bestFor.map((item) => (
                   <li
                     key={item}
-                    className="flex items-center gap-2 font-pixbob-regular text-lg md:text-xl xl:text-[28px]"
+                    className="flex items-center font-pixbob-regular text-xl md:text-3xl xl:text-[26px] 2xl:text-[32px]"
                   >
-                    <RPGSelector />
-                    <span>{item}</span>
+                    <span className="w-[1em] md:text-[40px] leading-none shrink-0">{'>'}</span>
+                    <span className="leading-[32px]">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -142,7 +141,7 @@ export default async function AgentProfilePage({
             <SectionLabel variant="blue" as="h2">
               mission
             </SectionLabel>
-            <div className="mt-2 border-standard border-black outline outline-3 outline-text bg-surface p-4 font-pixbob-regular text-lg md:text-xl xl:text-[28px]">
+            <div className="mt-2 border-standard border-black outline outline-3 outline-text bg-surface p-4 font-pixbob-regular text-lg md:text-xl xl:text-[24px] 2xl:text-[28px]">
               {agent.mission}
             </div>
           </div>

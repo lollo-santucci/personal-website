@@ -13,7 +13,7 @@ const VALIDATION = {
 const BRANDED = {
   slugFields: ['slug'],
   dateFields: [] as string[],
-  assetFields: ['image'],
+  assetFields: ['image', 'video'],
   slugArrayFields: [] as string[],
 };
 

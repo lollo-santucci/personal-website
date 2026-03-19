@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 
 // ---------------------------------------------------------------------------
 // Animation catalog — all agent spritesheets share the same layout
@@ -30,37 +30,50 @@ const FRAME_DURATION_MS = 200;
 const ANIM_MIN_INTERVAL = 6000;
 const ANIM_MAX_INTERVAL = 12000;
 
+/**
+ * Vertical offset to visually center the character within the frame.
+ * The character graphic sits lower in the 32×64 frame (top has empty space).
+ * This shifts the background up by ~10% of the frame height.
+ */
+const FRAME_OFFSET_Y = -8; // pixels at native scale
+
 // ---------------------------------------------------------------------------
-// Responsive scale
+// Responsive scale — uses inline <style> + scoped class, no Tailwind needed
 // ---------------------------------------------------------------------------
 
-/** Tailwind breakpoint order for deterministic class output. */
-const BREAKPOINT_ORDER = ['base', 'sm', 'md', 'lg', 'xl', '2xl'] as const;
-
-type Breakpoint = (typeof BREAKPOINT_ORDER)[number];
+type Breakpoint = 'base' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 type ResponsiveScale = number | Partial<Record<Breakpoint, number>>;
 
-/**
- * Converts the `scale` prop into Tailwind arbitrary-property classes that set
- * `--sprite-scale` at each breakpoint.
- *
- * - `scale={4}`                        → `"[--sprite-scale:4]"`
- * - `scale={{ base: 2, md: 4, xl: 6 }}` → `"[--sprite-scale:2] md:[--sprite-scale:4] xl:[--sprite-scale:6]"`
- */
-function scaleClasses(scale: ResponsiveScale): string {
-  if (typeof scale === 'number') {
-    return `[--sprite-scale:${String(scale)}]`;
-  }
+/** Tailwind breakpoint min-widths (px). */
+const BREAKPOINTS: Record<Exclude<Breakpoint, 'base'>, number> = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  '2xl': 1536,
+};
 
-  return BREAKPOINT_ORDER
-    .filter((bp) => scale[bp] !== undefined)
-    .map((bp) => {
-      const val = String(scale[bp]);
-      return bp === 'base'
-        ? `[--sprite-scale:${val}]`
-        : `${bp}:[--sprite-scale:${val}]`;
-    })
-    .join(' ');
+const BREAKPOINT_ORDER: Breakpoint[] = ['base', 'sm', 'md', 'lg', 'xl', '2xl'];
+
+/**
+ * Generates a `<style>` block that sets `--sprite-scale` on a scoped class,
+ * with media queries for each breakpoint. Works with any numeric value.
+ */
+function buildScaleCSS(scopeClass: string, scale: ResponsiveScale): string | null {
+  if (typeof scale === 'number') return null; // handled via inline style
+
+  const rules: string[] = [];
+  for (const bp of BREAKPOINT_ORDER) {
+    const val = scale[bp];
+    if (val === undefined) continue;
+    const rule = `.${scopeClass} { --sprite-scale: ${String(val)}; }`;
+    if (bp === 'base') {
+      rules.push(rule);
+    } else {
+      rules.push(`@media (min-width: ${String(BREAKPOINTS[bp])}px) { ${rule} }`);
+    }
+  }
+  return rules.join('\n');
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +89,8 @@ export interface AgentSpriteProps {
   autoPlay?: boolean;
   clickToAnimate?: boolean;
   hoverToAnimate?: boolean;
+  /** External hover trigger — when transitioning to true, plays a random animation. */
+  isHovered?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -130,16 +145,18 @@ function baseStyles(sheetUrl: string): React.CSSProperties {
 }
 
 function idlePosition(): React.CSSProperties {
+  const y = -IDLE_ROW * FRAME_H + FRAME_OFFSET_Y;
   return {
-    backgroundPosition: `calc(${String(-IDLE_COL * FRAME_W)}px * ${S}) calc(${String(-IDLE_ROW * FRAME_H)}px * ${S})`,
+    backgroundPosition: `calc(${String(-IDLE_COL * FRAME_W)}px * ${S}) calc(${String(y)}px * ${S})`,
   };
 }
 
 function animPosition(animName: AgentAnimationName, slug: string): React.CSSProperties {
   const anim = AGENT_ANIMATIONS[animName];
+  const y = -anim.row * FRAME_H + FRAME_OFFSET_Y;
   const totalDuration = anim.frames * FRAME_DURATION_MS;
   return {
-    backgroundPosition: `calc(${String(-anim.startCol * FRAME_W)}px * ${S}) calc(${String(-anim.row * FRAME_H)}px * ${S})`,
+    backgroundPosition: `calc(${String(-anim.startCol * FRAME_W)}px * ${S}) calc(${String(y)}px * ${S})`,
     animation: `agent-${slug}-${animName} ${String(totalDuration)}ms steps(${String(anim.frames - 1)}) 1`,
   };
 }
@@ -156,6 +173,7 @@ export default function AgentSprite({
   autoPlay = false,
   clickToAnimate = false,
   hoverToAnimate = false,
+  isHovered: isHoveredProp,
   className,
   style: styleProp,
 }: AgentSpriteProps) {
@@ -168,6 +186,12 @@ export default function AgentSprite({
   const hasAnimations = animations.length > 0;
   const hasTriggers = autoPlay || clickToAnimate || hoverToAnimate;
   const sheetUrl = `/assets/agents/${slug}/spritesheets/character_spritesheet.png`;
+
+  // Scoped class for responsive scale
+  const reactId = useId();
+  const scopeClass = `agent-sprite-${reactId.replace(/:/g, '')}`;
+  const isResponsive = typeof scale !== 'number';
+  const scaleCSS = isResponsive ? buildScaleCSS(scopeClass, scale) : null;
 
   // Detect prefers-reduced-motion
   useEffect(() => {
@@ -232,6 +256,15 @@ export default function AgentSprite({
     };
   }, [prefersReducedMotion, hasAnimations, autoPlay, pickRandomAnimation, playAnimation, randomDelay]);
 
+  // External hover trigger
+  useEffect(() => {
+    if (isHoveredProp && !prefersReducedMotion && hasAnimations) {
+      if (isAnimating.current) return;
+      const animName = pickRandomAnimation();
+      playAnimation(animName);
+    }
+  }, [isHoveredProp, prefersReducedMotion, hasAnimations, pickRandomAnimation, playAnimation]);
+
   // Click handler
   const handleClick = useCallback(() => {
     if (!clickToAnimate || !hasAnimations || prefersReducedMotion) return;
@@ -272,15 +305,22 @@ export default function AgentSprite({
     });
   }, [hoverToAnimate, hasAnimations, prefersReducedMotion, autoPlay, pickRandomAnimation, playAnimation, randomDelay]);
 
-  // Compose classes: scale classes + pixel-art + user className
-  const cls = `${scaleClasses(scale)} pixel-art ${className ?? ''}`.trim();
+  // Compose classes
+  const cls = [
+    'pixel-art',
+    isResponsive ? scopeClass : undefined,
+    className,
+  ].filter(Boolean).join(' ');
 
-  // Compose styles
+  // Compose styles — for static scale, set --sprite-scale via inline style
   const base = baseStyles(sheetUrl);
   const posStyles = prefersReducedMotion || activeAnim === null
     ? idlePosition()
     : animPosition(activeAnim, slug);
-  const mergedStyle: React.CSSProperties = { ...base, ...posStyles, ...styleProp };
+  const scaleStyle = !isResponsive
+    ? { '--sprite-scale': scale } as React.CSSProperties
+    : {};
+  const mergedStyle: React.CSSProperties = { ...scaleStyle, ...base, ...posStyles, ...styleProp };
 
   // Interactive props
   const interactiveProps: React.HTMLAttributes<HTMLDivElement> = {};
@@ -301,12 +341,15 @@ export default function AgentSprite({
   }
 
   return (
-    <div
-      role={interactiveProps.role ?? 'img'}
-      aria-label={`${name} sprite`}
-      className={cls}
-      style={mergedStyle}
-      {...interactiveProps}
-    />
+    <>
+      {scaleCSS && <style dangerouslySetInnerHTML={{ __html: scaleCSS }} />}
+      <div
+        role={interactiveProps.role ?? 'img'}
+        aria-label={`${name} sprite`}
+        className={cls}
+        style={mergedStyle}
+        {...interactiveProps}
+      />
+    </>
   );
 }

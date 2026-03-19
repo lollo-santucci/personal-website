@@ -1,0 +1,52 @@
+---
+title: Domestique
+slug: domestique
+description: The all in one web-app to manage the aacounting side of your housekeepers.
+stack:
+  - TypeScript
+  - MDX
+categories:
+  - web
+status: Shipped
+highlight: true
+links:
+  live: https://domestique.it
+image: /assets/projects/domestique/domestique.png
+video: /assets/projects/domestique/demo.MOV
+order: 0
+integrations:
+  - name: Supabase
+    category: Database
+    variant: green
+  - name: PostHog
+    category: Analytics
+    variant: yellow
+  - name: Stripe
+    category: Payments
+    variant: violet
+metrics:
+  - label: Time to market
+    value: 2 weeks
+    color: green
+  - label: MRR
+    value: 5$
+    color: yellow
+---
+
+# The Need
+
+This is the site you're looking at right now. It started as a portfolio and turned into something more ambitious: a modular content platform with two completely different ways to experience the same content.
+
+The classic view is a professional website — pages, projects, blog, services. Clean, fast, responsive. It works exactly the way a client or recruiter expects a developer's site to work.
+
+The play view is a 2D pixel-art world built with Phaser. Same content, different interface. Walk into a building, talk to a character, and you're reading the same project description that lives on the classic view. The world references content — it never duplicates it.
+
+ <ProjectMedia src="/assets/projects/domestique/demo.mov" caption="Dashboard in azione" type="video" /> 
+
+# The solution
+
+Under the hood, everything runs on a shared content system. MDX files for long-form content, YAML for structured entities like agents and locations. Adding a new project or blog post is a configuration task, not a code change. Type-safe content loading catches errors at build time, not in production.
+
+The agent platform adds AI-powered entities with a triple nature: they have a profile in the agentdex, a character in the world, and a software implementation that can actually chat and use tools. Built on the Vercel AI SDK with Anthropic as the primary provider.
+
+The architecture enforces a clean separation: Phaser handles world rendering only, React handles all UI, and Zustand bridges the two layers. No Phaser coordinates in CSS, no React components in the game loop.

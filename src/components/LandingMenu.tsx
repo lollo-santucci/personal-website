@@ -66,7 +66,7 @@ export default function LandingMenu() {
                 <span
                   role="menuitem"
                   aria-disabled="true"
-                  className="flex items-center gap-3 font-pixbob-regular text-2xl text-text-muted md:text-3xl xl:text-[48px]"
+                  className="flex items-center gap-3 font-pixbob-regular text-2xl text-text-muted md:text-3xl xl:text-[38px] 2xl:text-[48px]"
                 >
                   <span className="inline-block w-[1em] text-transparent">{'>'}</span>
                   <span>{item.label}</span>
@@ -85,7 +85,7 @@ export default function LandingMenu() {
                   router.push(item.href);
                 }}
                 onMouseEnter={() => setSelectedIndex(index)}
-                className={`flex items-center gap-3 font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px] ${
+                className={`flex items-center gap-3 font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[38px] 2xl:text-[48px] ${
                   isSelected ? 'animate-menu-pulse' : ''
                 }`}
               >

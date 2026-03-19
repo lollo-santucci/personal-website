@@ -10,13 +10,13 @@ export default function Header() {
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <header className="px-6 py-4 md:px-12 xl:px-page-px">
+    <header className="px-6 pt-8 pb-4 md:px-12 xl:px-[120px] 2xl:px-page-px">
       <div className="mx-auto flex max-w-content-max items-center justify-between">
         <TransitionLink
           href="/"
-          className="font-pixbob-bold text-2xl text-surface md:text-3xl xl:text-[46px]"
+          className="font-pixbob-bold text-2xl text-surface md:text-3xl xl:text-[36px] 2xl:text-[46px] [--stroke:6px] md:[--stroke:10px]"
           style={{
-            WebkitTextStrokeWidth: '10px',
+            WebkitTextStrokeWidth: 'var(--stroke)',
             WebkitTextStrokeColor: 'var(--black)',
             paintOrder: 'stroke fill',
           }}
@@ -29,7 +29,7 @@ export default function Header() {
           onClick={() => setIsMenuOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={isMenuOpen}
-          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px]"
+          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[38px] 2xl:text-[48px]"
         >
           <TextScramble text="MENU" scrambleOnHover />
         </button>

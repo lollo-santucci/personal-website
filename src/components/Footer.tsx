@@ -66,7 +66,7 @@ function MinimalFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="px-6 py-8 md:px-12 xl:px-page-px">
+    <footer className="px-6 py-8 md:px-12 xl:px-[120px] 2xl:px-page-px">
       <div className="mx-auto flex max-w-content-max flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
           <span className="flex items-center gap-1.5 font-pixbob-lite text-sm text-text md:text-xl">
@@ -107,7 +107,7 @@ function ArcadeFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="px-6 py-10 md:px-12 md:py-14 xl:px-100 xl:py-60">
+    <footer className="px-6 py-10 md:px-12 md:py-14 lg:px-20 xl:px-60 xl:py-20 2xl:px-95">
       <div className="mx-auto max-w-content-max">
         {/* ── Room illustration — @container for fluid scaling ─── */}
         <div className="@container relative mx-auto w-full">

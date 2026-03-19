@@ -114,11 +114,17 @@
 
   @media (min-width: 768px) {
     .landing-title-stroke {
-      -webkit-text-stroke-width: 14px;
+      -webkit-text-stroke-width: 16px;
     }
   }
 
   @media (min-width: 1280px) {
+    .landing-title-stroke {
+      -webkit-text-stroke-width: 16px;
+    }
+  }
+
+  @media (min-width: 1536px) {
     .landing-title-stroke {
       -webkit-text-stroke-width: 20px;
     }
@@ -159,12 +165,6 @@
 }
 @utility animate-page-enter {
   animation: page-enter 300ms ease-out both;
-}
-
-/* Text cursor blink */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
 }
 
 /* StatBar fill */

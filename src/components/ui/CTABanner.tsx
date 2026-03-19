@@ -14,7 +14,7 @@ export default function CTABanner({ headline, body, href, className }: CTABanner
       href={href}
       className={[
         'group block bg-secondary border-standard border-black outline outline-3 outline-text text-surface',
-        'px-6 md:px-8 xl:px-[40px] py-4 md:py-5 xl:py-[26px] xl:my-[40px]',
+        'px-6 md:px-8 xl:px-[32px] 2xl:px-[40px] py-4 md:py-5 xl:py-[20px] 2xl:py-[26px] xl:my-[30px] 2xl:my-[40px]',
         'transition-transform duration-200 motion-reduce:transition-none hover:-translate-y-0.5 active:translate-y-0',
         className,
       ]
@@ -23,10 +23,10 @@ export default function CTABanner({ headline, body, href, className }: CTABanner
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2.5">
-          <span className="font-pixbob-bold text-xl md:text-2xl xl:text-[40px]">
+          <span className="font-pixbob-bold text-xl md:text-2xl xl:text-[32px] 2xl:text-[40px]">
             {headline}
           </span>
-          <span className="font-pixbob-regular text-lg md:text-xl xl:text-[36px] leading-[32px]">
+          <span className="font-pixbob-regular text-lg md:text-xl xl:text-[30px] 2xl:text-[36px] leading-[32px]">
             {body}
           </span>
         </div>

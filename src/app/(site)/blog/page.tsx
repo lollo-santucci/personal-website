@@ -33,7 +33,7 @@ export default async function BlogPage() {
       items: sortedAgents.slice(0, 3).map((agent) => ({
         label: `${formatAgentIndex(agent.index)} - ${agent.name}`,
         href: `/agentdex/${String(agent.slug)}`,
-        thumbnail: <AgentSprite slug={String(agent.slug)} name={agent.name} scale={1} className="shrink-0 mr-[15px]" />,
+        thumbnail: <AgentSprite slug={String(agent.slug)} name={agent.name} scale={1} animations={['walk-down', 'walk-right']} autoPlay hoverToAnimate className="shrink-0 mr-[15px]" />,
       })),
     },
     {
@@ -71,7 +71,7 @@ export default async function BlogPage() {
         </CollectionContainer>
       ) : (
         <CollectionContainer>
-          <p className="font-pixbob-regular text-lg md:text-xl xl:text-[26px] text-text-muted">
+          <p className="font-pixbob-regular text-lg md:text-xl xl:text-[22px] 2xl:text-[26px] text-text-muted">
             No posts yet. Check back soon!
           </p>
         </CollectionContainer>

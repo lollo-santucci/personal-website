@@ -28,12 +28,12 @@ export default function BlogPostRow({ href, date, title, excerpt, isNew }: BlogP
         className="flex items-center justify-between gap-6 transition-transform duration-200 motion-reduce:transition-none"
         style={{ transform: isHovered ? 'translateX(4px)' : 'translateX(0)' }}
       >
-        <div className="flex flex-1 min-w-0 items-center gap-6 font-pixbob-regular text-xl md:text-4xl xl:text-[42px]">
-          <span className="shrink-0 text-text-muted md:text-4xl">
+        <div className="flex flex-1 min-w-0 items-center xl:gap-6 font-pixbob-regular text-md md:text-3xl xl:text-[34px] 2xl:text-[42px]">
+          <span className="hidden md:inline shrink-0 text-text-muted md:text-2xl xl:text-4xl">
             {date}
           </span>
           <span
-            className="shrink-0 font-pixbob-regular text-2xl md:text-3xl xl:text-[40px] text-text transition-all duration-200 motion-reduce:transition-none"
+            className="shrink-0 font-pixbob-regular text-2xl md:text-3xl xl:text-[32px] 2xl:text-[40px] text-text transition-all duration-200 motion-reduce:transition-none"
             style={{
               opacity: isHovered ? 1 : 0,
               transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
@@ -50,7 +50,7 @@ export default function BlogPostRow({ href, date, title, excerpt, isNew }: BlogP
           )}
         </div>
         <div className="flex-shrink-0">
-          <Button variant="secondary" size="sm" as="span">
+          <Button variant="secondary" size="xs" as="span" className="md:text-base md:px-3 md:py-1.5 xl:text-[20px] 2xl:text-[22px]">
             Read
           </Button>
         </div>

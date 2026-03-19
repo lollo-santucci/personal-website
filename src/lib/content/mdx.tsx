@@ -1,5 +1,6 @@
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import type { AnchorHTMLAttributes, JSX } from 'react';
+import ProjectMedia from '@/components/mdx/ProjectMedia';
 
 /**
  * Custom anchor that opens external links in a new tab.
@@ -16,7 +17,7 @@ function MdxAnchor(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <a {...props} />;
 }
 
-const components = { a: MdxAnchor };
+const components = { a: MdxAnchor, ProjectMedia };
 
 /**
  * Render a raw MDX string as a React Server Component element.

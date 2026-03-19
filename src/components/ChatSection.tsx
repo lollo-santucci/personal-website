@@ -66,7 +66,7 @@ export default function ChatSection({ agentName, greeting }: ChatSectionProps) {
 
       <div className="mt-4 flex flex-col gap-4">
         {/* Greeting area */}
-        <div className="border-standard border-black outline outline-3 outline-text bg-surface p-4 font-pixbob-regular text-base md:text-lg xl:text-[28px]">
+        <div className="border-standard border-black outline outline-3 outline-text bg-surface p-4 font-pixbob-regular text-lg md:text-xl xl:text-[24px] 2xl:text-[28px]">
           <p>
             <span className="font-pixbob-bold">{agentName}:</span>{' '}
             {displayGreeting.slice(0, charIndex)}
@@ -81,7 +81,7 @@ export default function ChatSection({ agentName, greeting }: ChatSectionProps) {
             placeholder="You:"
             readOnly
             tabIndex={-1}
-            className="flex-1 border-standard border-black outline outline-3 outline-text bg-surface px-4 py-2 font-pixbob-regular text-base md:text-lg xl:text-[28px] placeholder:text-text-muted"
+            className="flex-1 border-standard border-black outline outline-3 outline-text bg-surface px-4 py-2 font-pixbob-regular text-base md:text-lg xl:text-[24px] 2xl:text-[28px] placeholder:text-text-muted"
           />
           <Button
             variant="dark"

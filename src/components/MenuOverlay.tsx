@@ -120,13 +120,13 @@ export default function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlay
       className="fixed inset-0 z-50 flex flex-col bg-surface"
     >
       {/* Close button row */}
-      <div className="flex justify-end px-6 py-4 md:px-12 xl:px-page-px">
+      <div className="flex justify-end px-6 py-4 md:px-12 xl:px-[120px] 2xl:px-page-px">
         <button
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
           aria-label="Close navigation menu"
-          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px]"
+          className="font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[38px] 2xl:text-[48px]"
         >
           <TextScramble text="CLOSE" scrambleOnMount scrambleOnHover />
         </button>
@@ -149,7 +149,7 @@ export default function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlay
                     router.push(href);
                   }}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`flex items-center gap-3 font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[48px] ${
+                  className={`flex items-center gap-3 font-pixbob-regular text-2xl text-text md:text-3xl xl:text-[38px] 2xl:text-[48px] ${
                     isSelected ? 'animate-menu-pulse' : ''
                   }`}
                 >

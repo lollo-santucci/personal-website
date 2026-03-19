@@ -84,7 +84,7 @@ export default function StatBar({ label, value, className }: StatBarProps) {
     >
       <div className="flex flex-col-reverse gap-1.5 xl:gap-2 p-2 xl:p-2.5">{rectangles}</div>
       <div className="p-2 xl:p-2">
-        <span className="font-pixbob-regular text-lg md:text-xl xl:text-[32px] leading-[32px] text-center whitespace-nowrap">
+        <span className="font-pixbob-regular text-lg md:text-xl xl:text-[26px] 2xl:text-[32px] leading-[32px] text-center whitespace-nowrap">
           {label}
         </span>
       </div>

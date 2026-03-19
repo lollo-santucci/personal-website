@@ -16,6 +16,7 @@ export interface Project {
     demo?: string;
   };
   image?: AssetPath;
+  video?: AssetPath;
   order?: number;
   integrations?: Array<{ name: string; category: string; variant?: string }>;
   metrics?: Array<{ label: string; value: string; color?: string }>;

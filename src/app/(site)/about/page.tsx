@@ -83,9 +83,9 @@ export default async function AboutPage() {
       crossLinkSections={crossLinkSections}
       afterContent={
         <div>
-          <div className="px-6 md:px-12 xl:px-page-px">
+          <div className="px-6 md:px-12 xl:px-[120px] 2xl:px-page-px">
             <div className="mx-auto max-w-content-max">
-              <h2 className="font-pixbob-bold text-2xl md:text-3xl xl:text-[48px]">Trusted by</h2>
+              <h2 className="font-pixbob-bold text-2xl md:text-3xl xl:text-[38px] 2xl:text-[48px]">Trusted by</h2>
             </div>
           </div>
           <div className="mt-12">
@@ -94,7 +94,7 @@ export default async function AboutPage() {
         </div>
       }
     >
-      <div className="flex flex-col gap-8 lg:flex-row xl:gap-[25px]">
+      <div className="flex flex-col gap-8 lg:flex-row xl:gap-5 2xl:gap-[25px]">
         {/* Left column: prose content */}
         <div className="lg:flex-[50] lg:min-w-0">
           {mdxContent ? (
@@ -105,7 +105,7 @@ export default async function AboutPage() {
         </div>
 
         {/* Right column: agentdex-style profile sidebar */}
-        <aside className="flex flex-col gap-6 xl:gap-[25px] lg:flex-[50] lg:min-w-0 md:px-20">
+        <aside className="flex flex-col gap-6 xl:gap-5 2xl:gap-[25px] lg:flex-[50] lg:min-w-0 md:px-20">
           {agent && (
             <>
               {/* Header row: agentdex badge (with arrow icon) + ID label */}
@@ -116,7 +116,7 @@ export default async function AboutPage() {
                     <ArrowUpRight className="ml-1 size-2.5 xl:size-[10px]" />
                   </Badge>
                 </TransitionLink>
-                <span className="border-standard border-black outline outline-3 outline-text bg-surface px-3 py-1.5 font-pixbob-regular text-lg md:text-2xl xl:text-[40px] leading-[32px]">
+                <span className="border-standard border-black outline outline-3 outline-text bg-surface px-3 py-1.5 font-pixbob-regular text-lg md:text-2xl xl:text-[32px] 2xl:text-[40px] leading-[32px]">
                   001 - {agent.name}
                 </span>
               </div>
@@ -135,22 +135,22 @@ export default async function AboutPage() {
                 </div>
 
                 {/* Role + Best for */}
-                <div className="flex flex-col gap-6 xl:gap-[25px]">
-                  <div className="flex flex-col gap-4 xl:gap-[25px]">
+                <div className="flex flex-col gap-6 xl:gap-5 2xl:gap-[25px]">
+                  <div className="flex flex-col gap-4 xl:gap-5 2xl:gap-[25px]">
                     <SectionLabel variant="dark" as="h2">Role</SectionLabel>
-                    <p className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[32px]">
+                    <p className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[26px] 2xl:text-[32px]">
                       <span className="w-[1em] text-[40px] leading-none shrink-0">{'>'}</span>
                       <span className="leading-[32px]">{agent.role}</span>
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-4 xl:gap-[25px]">
+                  <div className="flex flex-col gap-4 xl:gap-5 2xl:gap-[25px]">
                     <SectionLabel variant="dark" as="h2">Best for</SectionLabel>
                     <ul className="flex flex-col gap-1">
                       {agent.bestFor.map((item) => (
                         <li
                           key={item}
-                          className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[32px]"
+                          className="flex items-center font-pixbob-regular text-lg md:text-xl xl:text-[26px] 2xl:text-[32px]"
                         >
                           <span className="w-[1em] text-[40px] leading-none shrink-0">{'>'}</span>
                           <span className="leading-[32px]">{item}</span>
@@ -162,17 +162,17 @@ export default async function AboutPage() {
               </div>
 
               {/* Mission */}
-              <div className="flex flex-col gap-4 xl:gap-[25px] xl:px-10 xl:my-12">
+              <div className="flex flex-col gap-4 xl:gap-5 2xl:gap-[25px] xl:px-10 xl:my-12">
                 <SectionLabel variant="blue" as="h2">Mission</SectionLabel>
                 <div className="border-standard border-black outline outline-3 outline-text px-4 py-3 xl:px-[25px] xl:py-4">
-                  <p className="font-pixbob-regular text-lg md:text-xl xl:text-[28px] leading-[32px]">
+                  <p className="font-pixbob-regular text-lg md:text-xl xl:text-[24px] 2xl:text-[28px] leading-[32px]">
                     {agent.mission}
                   </p>
                 </div>
               </div>
 
               {/* Tone of Voice */}
-              <div className="flex flex-col gap-4 xl:gap-[25px] xl:px-10">
+              <div className="flex flex-col gap-4 xl:gap-5 2xl:gap-[25px] xl:px-10">
                 <SectionLabel variant="lime" as="h2">Tone of Voice</SectionLabel>
                 <StatBarGroup>
                   <StatBar label="Warm" value={agent.toneOfVoice.warm} />
@@ -191,7 +191,7 @@ export default async function AboutPage() {
               variant="primary"
               size="sm"
               href="/agentdex/lorenzo-santucci"
-              className="xl:text-[32px] xl:px-3 xl:py-1.5"
+              className="xl:text-[26px] 2xl:text-[32px] xl:px-3 xl:py-1.5"
               icon={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
