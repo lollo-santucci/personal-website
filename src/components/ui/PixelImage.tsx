@@ -21,6 +21,9 @@ export default function PixelImage({
   const classes = ['pixel-art', className].filter(Boolean).join(' ');
 
   return (
+    // Raw <img> intentional: pixel-art requires image-rendering: pixelated (via .pixel-art)
+    // and exact scale-based dimensions. next/image doesn't support this pattern well.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}

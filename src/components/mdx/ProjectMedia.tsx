@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Image from 'next/image';
 
 /**
  * Inline media block for MDX content — image or video, centered with a thick border.
@@ -89,10 +90,12 @@ export default function ProjectMedia({
             </button>
           </>
         ) : (
-          <img
+          <Image
             src={src}
             alt={alt}
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            sizes="(max-width: 560px) 100vw, 560px"
+            className="object-cover"
           />
         )}
       </div>

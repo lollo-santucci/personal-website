@@ -16,6 +16,7 @@ import Prose from '@/components/ui/Prose';
 import Badge from '@/components/ui/Badge';
 import ArticleWithProgress from '@/components/ArticleWithProgress';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
+import { generateBlogPostingJsonLd } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
   const posts = await getBlogPosts();
@@ -81,7 +82,19 @@ export default async function BlogDetailPage({
 
   const readTime = calculateReadTime(post.content);
 
+  const jsonLd = generateBlogPostingJsonLd({
+    title: post.title,
+    excerpt: post.excerpt,
+    date: post.date,
+    slug: String(post.slug),
+  });
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
     <InnerPageLayout
       title={post.title}
       ctaHeadline="Read something interesting?"
@@ -126,5 +139,6 @@ export default async function BlogDetailPage({
         </div>
       </ArticleWithProgress>
     </InnerPageLayout>
+    </>
   );
 }

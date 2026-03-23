@@ -4,6 +4,7 @@ import { Manrope } from 'next/font/google';
 import '@/styles/globals.css';
 import SkipToContent from '@/components/SkipToContent';
 import { TransitionProvider } from '@/lib/transition/transition-context';
+import { generateWebSiteJsonLd, generatePersonJsonLd } from '@/lib/structured-data';
 
 const pixbobBold = localFont({
   src: '../../public/assets/fonts/pixbob-bold.ttf',
@@ -60,6 +61,14 @@ export default function RootLayout({
       className={`${pixbobBold.variable} ${pixbobRegular.variable} ${pixbobLite.variable} ${manrope.variable}`}
     >
       <body className="flex min-h-screen flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(generateWebSiteJsonLd()) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(generatePersonJsonLd()) }}
+        />
         <SkipToContent />
         <TransitionProvider>
           {children}

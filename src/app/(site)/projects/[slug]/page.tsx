@@ -16,7 +16,9 @@ import Badge from '@/components/ui/Badge';
 import type { BadgeVariant } from '@/components/ui/Badge';
 import ProjectMetadataPanel from '@/components/ProjectMetadataPanel';
 import AgentSprite from '@/components/AgentSprite';
+import Image from 'next/image';
 import type { CrossLinkSection } from '@/components/ui/CrossLinks';
+import { generateCreativeWorkJsonLd } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
   const projects = await getProjects();
@@ -83,6 +85,12 @@ export default async function ProjectDetailPage({
     );
   }
 
+  const jsonLd = generateCreativeWorkJsonLd({
+    title: project.title,
+    description: project.description,
+    slug: String(project.slug),
+  });
+
   const heroContent = (
     <div className="px-6 md:px-12 xl:px-[120px] 2xl:px-page-px">
       <div className="mx-auto max-w-content-max flex flex-col gap-3 md:gap-4">
@@ -92,10 +100,13 @@ export default async function ProjectDetailPage({
         />
         <div className="relative overflow-hidden">
           {/* Background image */}
-          <img
+          <Image
             src="/assets/imgs/project-header-bg.webp"
             alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
+            fill
+            priority
+            className="object-cover object-[center_30%]"
+            sizes="100vw"
             aria-hidden="true"
           />
 
@@ -103,11 +114,13 @@ export default async function ProjectDetailPage({
           <div className="relative flex flex-col gap-4 px-6 py-6 md:flex-row md:gap-4 md:px-10 md:py-8">
             {/* Screenshot thumbnail */}
             {project.image && (
-              <div className="shrink-0 overflow-hidden border-[5px] border-black md:h-[200px] md:w-[268px]">
-                <img
+              <div className="relative shrink-0 overflow-hidden border-[5px] border-black md:h-[200px] md:w-[268px]">
+                <Image
                   src={String(project.image)}
                   alt={`Screenshot of ${project.title}`}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="268px"
+                  className="object-cover"
                 />
               </div>
             )}
@@ -149,6 +162,11 @@ export default async function ProjectDetailPage({
   );
 
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
     <InnerPageLayout
       title={project.title}
       hero={heroContent}
@@ -173,5 +191,6 @@ export default async function ProjectDetailPage({
         </div>
       </div>
     </InnerPageLayout>
+    </>
   );
 }

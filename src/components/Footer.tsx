@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import TransitionLink from '@/components/TransitionLink';
 import Button from '@/components/ui/Button';
 import FooterInvaders from '@/components/FooterInvaders';

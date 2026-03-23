@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import TransitionLink from '@/components/TransitionLink';
+import Image from 'next/image';
 import type { Project } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 import type { BadgeVariant } from '@/components/ui/Badge';
@@ -43,16 +44,20 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           {/* Image frame */}
           <div className="relative overflow-hidden border-frame border-black bg-surface aspect-[4/3]">
             {project.image ? (
-              <img
+              <Image
                 src={project.image}
                 alt={`Screenshot of ${project.title}`}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 motion-reduce:transition-none ${project.video ? 'group-hover:opacity-0' : ''}`}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                className={`object-cover transition-opacity duration-300 motion-reduce:transition-none ${project.video ? 'group-hover:opacity-0' : ''}`}
               />
             ) : (
-              <img
+              <Image
                 src="/assets/projects/fallback.jpg"
                 alt={`Screenshot of ${project.title}`}
-                className="absolute inset-0 h-full w-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                className="object-cover"
               />
             )}
 
