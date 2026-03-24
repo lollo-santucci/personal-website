@@ -15,6 +15,15 @@ This file tracks mistakes, corrections, and decisions made during development. *
 
 ## Mistakes & Corrections
 
+### Misread "manuale" as CLI instead of dashboard
+**What went wrong:** Lorenzo asked for a "deployment manuale su vercel" and I gave CLI instructions. He clarified he meant the Vercel dashboard (vercel.com), not the CLI.
+**Why:** Assumed "manuale" meant "from the terminal" rather than "from the browser UI".
+**Correct approach:** When Lorenzo says "manuale su [platform].com", he means the web dashboard flow. Ask for clarification if ambiguous.
+
+## Decisions Log
+
+## Mistakes & Corrections
+
 ### Cross-link data loading breaks all old page tests when pages are redesigned
 **What went wrong:** Redesigned pages load agents/projects/blogPosts for cross-link sections via `Promise.all`. Old test mocks only mocked the page's primary content loader (e.g., `getBlogPosts` for blog index) but not `getAgents`/`getProjects`. This caused 16 test files to fail simultaneously at the checkpoint.
 **Why:** Cross-link data is a new architectural pattern (InnerPageLayout + CrossLinks) that touches every inner page. Old tests had no awareness of it.
